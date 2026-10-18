@@ -100,3 +100,10 @@ with expected outputs.
 - Models: pose model is a tiny MLP exported to `.pte` (XNNPACK,
   3,600 bytes, sub-ms inference). Re-export through
   `train_model.py`; never hand-edit `.pte` files.
+- LED matrix text: the sketch queues via `matrix_text(String)` and scrolls
+  in loop() with ArduinoGraphics (Font_5x7, SCROLL_LEFT). ArduinoGraphics
+  is NOT in the sketchbook by default — copy it once on the board:
+  `cp -r ~/.arduino15/internal/ArduinoGraphics_*/ArduinoGraphics ~/Arduino/libraries/`
+- NEVER upload right after a failed compile: the stale build can
+  half-flash the MCU and kill the running sketch (every Bridge method
+  vanishes). Compile clean first, then upload, then verify a Bridge call.
