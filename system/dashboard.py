@@ -52,6 +52,11 @@ dreams while it sleeps, and wakes up better. <span class="muted">Host robot: <b 
     <img class="cam" id="cam" alt="camera preview">
     <div class="row" style="margin-top:8px"><span class="zone" id="zone">—</span><b id="zconf"></b></div>
     <div class="muted" id="zprobs"></div></div>
+  <div class="card"><h2>Dream simulator — what it's dreaming</h2>
+    <canvas id="dreamCanvas" width="460" height="240" style="width:100%;background:#0a0e14;border-radius:8px;border:1px solid #30363d"></canvas>
+    <div class="row" style="margin-top:6px"><span id="dreamCaption">loading dreams…</span><b id="dreamCount"></b></div>
+    <div class="muted">Each frame is one imagined pose from the robot's current dream batch —
+    rehearsals it generated from its own memories while idle.</div></div>
   <div class="card"><h2>What it believes (probe poses)</h2><div id="probes"></div>
     <div class="row"><span>Probe accuracy</span><b id="acc"></b></div>
     <div class="row"><span>Mean confidence</span><b id="conf"></b></div></div>
@@ -116,6 +121,44 @@ async function tick() {
     document.getElementById('live').textContent = '● live';
   } catch (e) { document.getElementById('live').textContent = '○ reconnecting'; }
 }
+let dreams = [], di = 0;
+const DCLS = ['standing', 'walking', 'fallen', 'flipped'];
+const DCOL = {standing: '#3fb950', walking: '#58a6ff', fallen: '#d29922', flipped: '#f85149'};
+async function loadDreams() {
+  try { const d = await (await fetch('/dreams.json')).json(); dreams = d.dreams || [];
+    document.getElementById('dreamCount').textContent = dreams.length ? dreams.length + ' poses in this dream' : '';
+  } catch (e) {}
+}
+function drawDream() {
+  const c = document.getElementById('dreamCanvas');
+  if (!c || !dreams.length) return;
+  const ctx = c.getContext('2d'), W = c.width, H = c.height;
+  const s = dreams[di % dreams.length]; di++;
+  const [ax, , az, gx] = s.features;
+  const tilt = Math.atan2(ax, az);
+  const cls = DCLS[s.label] || 'standing';
+  ctx.clearRect(0, 0, W, H);
+  const groundY = H - 30;
+  ctx.strokeStyle = '#30363d'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(W, groundY); ctx.stroke();
+  const cx = W / 2;
+  const lift = Math.max(0, Math.cos(tilt)) * 36;
+  const by = groundY - 16 - lift;
+  const stride = cls === 'walking' ? Math.sin(Date.now() / 130) * 9 : 0;
+  ctx.save(); ctx.translate(cx, by); ctx.rotate(tilt);
+  ctx.strokeStyle = '#8b949e'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  [[-30, stride], [-12, -stride], [14, -stride], [32, stride]].forEach(([lx, sw]) => {
+    ctx.beginPath(); ctx.moveTo(lx, 10); ctx.lineTo(lx + sw * 0.4, 22); ctx.lineTo(lx + sw, 34); ctx.stroke();
+  });
+  ctx.fillStyle = DCOL[cls]; ctx.beginPath(); ctx.roundRect(-44, -13, 88, 26, 6); ctx.fill();
+  ctx.fillStyle = '#e6edf3'; ctx.fillRect(36, -17, 15, 13);
+  ctx.beginPath(); ctx.arc(41, -10, 2.4, 0, 7); ctx.fillStyle = '#0d1117'; ctx.fill();
+  ctx.restore();
+  const deg = Math.round(tilt * 180 / Math.PI);
+  document.getElementById('dreamCaption').textContent =
+    `dreaming: ${cls} · tilt ${deg}° · ${s.source === 'dream' ? 'imagined from memory' : 'a memory'}`;
+}
+loadDreams(); setInterval(loadDreams, 15000); setInterval(drawDream, 900);
 tick(); setInterval(tick, 3000);
 </script></body></html>"""
 
@@ -162,6 +205,12 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self.send_response(404)
                 self.end_headers()
+        elif path == "/dreams.json":
+            dreams = read_json("dream_samples.json") or []
+            imagined = [d for d in dreams if d.get("source") == "dream"]
+            memories = [d for d in dreams if d.get("source") != "dream"]
+            self._send(json.dumps({"dreams": (imagined + memories)[-160:],
+                                   "total": len(dreams)}), "application/json")
         elif path == "/events":
             events = []
             log = os.path.join(HERE, "events.log")
