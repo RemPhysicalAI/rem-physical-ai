@@ -101,6 +101,15 @@ PAGE = """<!DOCTYPE html>
   #dreamWrap:fullscreen { background:#05070f; display:flex; align-items:center; justify-content:center; }
   #dreamWrap:fullscreen canvas, #dreamWrap:fullscreen img.cam { width:100% !important; max-height:100vh; object-fit:contain; }
   .zone { font-size:20px; font-weight:700; }
+  .proj { border:1px solid rgba(150,168,255,.2); border-radius:14px; padding:10px 12px; margin-bottom:10px;
+          background:rgba(255,255,255,.03); }
+  .proj.inview { border-color:rgba(255,222,150,.6); background:rgba(255,233,168,.06);
+                 box-shadow: 0 0 18px rgba(255,206,110,.15); }
+  .proj-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+  .chip { font-size:11.5px; padding:2px 9px; border-radius:999px; white-space:nowrap; }
+  .chip.ctl { background:rgba(63,185,80,.16); border:1px solid rgba(63,185,80,.45); color:#7ee2a0; }
+  .chip.drm { background:rgba(139,92,246,.18); border:1px solid rgba(139,92,246,.5); color:#cdb4ff; }
+  .proj-status { font-size:12.5px; color:#9fb0e8; margin-top:5px; }
   #voice { background:rgba(255,233,168,.07); border:1px solid rgba(255,222,150,.32); border-radius:16px;
            padding:10px 14px; color:#ffedb5; }
   #voice:empty { display:none; }
@@ -139,7 +148,11 @@ PAGE = """<!DOCTYPE html>
   <span class="zzz"><span style="font-size:12px">z</span> <span style="font-size:17px">z</span> <span style="font-size:23px">Z</span></span>
 </div>
 <div class="main">
-  <aside class="panel side"><h2>👀 Eyes — the camera</h2>
+  <aside class="panel side"><h2>🗂 Projects — one system, many robots</h2>
+    <div id="projects"><div class="muted">The camera is the front door: the system
+    detects the robot in view, knows which robot it is — then it controls it if
+    it can, or dreams about it and trains it virtually if it cannot.</div></div>
+    <h2 style="margin-top:16px">👀 Eyes — the camera</h2>
     <img class="cam" id="cam" alt="camera preview">
     <div class="row" style="margin-top:8px"><span class="zone" id="zone">—</span><b id="zconf"></b></div>
     <div class="muted" id="zprobs"></div>
@@ -191,10 +204,21 @@ async function tick() {
     const v = s.vision || {};
     if (v.zone) {
       document.getElementById('cam').src = '/latest.jpg?t=' + Date.now();
-      document.getElementById('zone').textContent = 'ODC is: ' + v.zone;
-      document.getElementById('zconf').textContent = Math.round((v.confidence || 0) * 100) + '% · ' + (v.infer_ms ?? '') + ' ms';
-      document.getElementById('zprobs').textContent = v.probs ?
-        Object.entries(v.probs).map(([k, p]) => k + ' ' + Math.round(p * 100) + '%').join(' · ') : '';
+      document.getElementById('zone').textContent = v.zone === 'watching' ? '👀 watching' : 'ODC is: ' + v.zone;
+      document.getElementById('zconf').textContent = v.confidence != null ?
+        Math.round(v.confidence * 100) + '% · ' + (v.infer_ms ?? '') + ' ms' : 'camera live';
+      document.getElementById('zprobs').textContent = v.note || (v.probs ?
+        Object.entries(v.probs).map(([k, p]) => k + ' ' + Math.round(p * 100) + '%').join(' · ') : '');
+    }
+    if (s.projects) {
+      document.getElementById('projects').innerHTML =
+        (s.projects.projects || []).map(p => `
+        <div class="proj ${p.status === 'in view now' ? 'inview' : ''}">
+          <div class="proj-top"><b>${p.name}</b>
+          <span class="chip ${p.control === 'full' ? 'ctl' : 'drm'}">${p.control === 'full' ? '⚙️ full control' : '🌙 dream only'}</span></div>
+          <div class="muted">${p.what}</div>
+          <div class="proj-status">${p.status === 'in view now' ? '📷 in view now — preparing to dream about it' : (p.status === 'on this board' ? '🏠 on this board' : '📷 not in view')}</div>
+        </div>`).join('');
     }
     document.getElementById('probes').innerHTML = (s.probes || []).map(p => `
       <div class="probe"><div class="lbl"><span>${p.name} → <b>${p.pose}</b></span>
@@ -636,6 +660,17 @@ class Handler(BaseHTTPRequestHandler):
             voice = read_json("voice_state.json")
             if voice:
                 state["voice"] = voice
+            projects = read_json("projects.json")
+            if projects:
+                vz = (vision or {}).get("zone")
+                for p in projects.get("projects", []):
+                    if p.get("control") == "full":
+                        p["status"] = "on this board"
+                    elif vz and vz not in ("absent", "watching"):
+                        p["status"] = "in view now"
+                    else:
+                        p["status"] = "not in view"
+                state["projects"] = projects
             self._send(json.dumps(state), "application/json")
         elif path in ("/latest.jpg", "/banner.jpg", "/dream_stand.jpg", "/dream_fallen.jpg",
                       "/dream_flipped.jpg"):

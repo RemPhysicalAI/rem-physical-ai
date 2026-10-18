@@ -33,14 +33,21 @@ def main():
     ap.add_argument("--model", default=os.path.join(HERE, "vision.pte"))
     args = ap.parse_args()
 
-    with open(os.path.join(HERE, "vision_labels.json")) as f:
-        labels = json.load(f)["labels"]
+    labels = ["absent", "left", "center", "right"]
+    if os.path.exists(os.path.join(HERE, "vision_labels.json")):
+        with open(os.path.join(HERE, "vision_labels.json")) as f:
+            labels = json.load(f)["labels"]
 
-    from executorch.runtime import Runtime
+    method = None
+    if os.path.exists(args.model):
+        from executorch.runtime import Runtime
 
-    runtime = Runtime.get()
-    method = runtime.load_program(args.model).load_method("forward")
-    print(f"vision model loaded: {args.model} labels={labels}")
+        runtime = Runtime.get()
+        method = runtime.load_program(args.model).load_method("forward")
+        print(f"vision model loaded: {args.model} labels={labels}")
+    else:
+        print("no vision model yet — preview mode: the camera streams and "
+              "the dashboard watches; teach it (vision_train.py) to name zones")
 
     try:
         bridge = Bridge()
@@ -62,24 +69,30 @@ def main():
         if not ok:
             time.sleep(0.1)
             continue
-        small = cv2.resize(frame, (SIZE, SIZE))
-        rgb = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
-        tensor = torch.from_numpy(rgb).permute(2, 0, 1).float().unsqueeze(0) / 255.0
-        t0 = time.perf_counter()
-        scores = method.execute([tensor])[0][0]
-        infer_ms = (time.perf_counter() - t0) * 1000
-        probs = torch.softmax(scores, dim=0)
-        zone = labels[int(torch.argmax(probs))]
-        conf = float(torch.max(probs))
-
-        state = {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                 "zone": zone, "confidence": round(conf, 3),
-                 "infer_ms": round(infer_ms, 1),
-                 "probs": {labels[i]: round(float(probs[i]), 3) for i in range(len(labels))}}
+        if method is not None:
+            small = cv2.resize(frame, (SIZE, SIZE))
+            rgb = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
+            tensor = torch.from_numpy(rgb).permute(2, 0, 1).float().unsqueeze(0) / 255.0
+            t0 = time.perf_counter()
+            scores = method.execute([tensor])[0][0]
+            infer_ms = (time.perf_counter() - t0) * 1000
+            probs = torch.softmax(scores, dim=0)
+            zone = labels[int(torch.argmax(probs))]
+            conf = float(torch.max(probs))
+            state = {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                     "zone": zone, "confidence": round(conf, 3),
+                     "infer_ms": round(infer_ms, 1),
+                     "probs": {labels[i]: round(float(probs[i]), 3) for i in range(len(labels))}}
+            print(f"zone={zone:7s} conf={conf:.2f} infer={infer_ms:.1f}ms", flush=True)
+        else:
+            zone = "watching"
+            state = {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                     "zone": "watching", "confidence": None, "probs": {},
+                     "note": "camera live — vision model not trained yet"}
+            print("preview frame", flush=True)
         with open(os.path.join(HERE, "vision_state.json"), "w") as f:
             json.dump(state, f, indent=1)
         cv2.imwrite(os.path.join(HERE, "latest.jpg"), frame)
-        print(f"zone={zone:7s} conf={conf:.2f} infer={infer_ms:.1f}ms", flush=True)
 
         if bridge is not None and zone != last_zone:
             try:

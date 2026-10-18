@@ -71,3 +71,23 @@ body is 3,600 bytes and decides in under a millisecond; training
 happens on the robot; the largest component, the voice, is a 0.6B
 model running fully offline. Physical AI does not need a data center.
 It needs a body, a dream, and time.
+
+## One system, many robots
+
+REM PhysicalAI is not built for one robot — it is a system that many
+robots (many *projects*) plug into. Every session starts the same way:
+
+1. **The camera opens.** It is the front door of the system.
+2. **It detects and identifies the robot in view.** The system knows
+   which robot it is looking at — each robot is a registered project
+   (`system/projects.json`).
+3. **If it can control that robot, it controls it.** The host body on
+   the board is commanded for real, through the Bridge.
+4. **If it cannot, it dreams about it.** A robot this system cannot
+   drive — like the PuppyPi at this event, another team's robot — gets
+   a physics twin: the system rehearses with the twin on the dream
+   stage and trains it virtually, ready for the real thing.
+
+The dashboard's Projects panel shows this live: every registered
+robot, its mode (⚙️ full control / 🌙 dream only), and which one the
+camera is looking at right now.
