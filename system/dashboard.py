@@ -110,6 +110,12 @@ PAGE = """<!DOCTYPE html>
   .chip.ctl { background:rgba(63,185,80,.16); border:1px solid rgba(63,185,80,.45); color:#7ee2a0; }
   .chip.drm { background:rgba(139,92,246,.18); border:1px solid rgba(139,92,246,.5); color:#cdb4ff; }
   .proj-status { font-size:12.5px; color:#9fb0e8; margin-top:5px; }
+  .svc { font-size:11.5px; padding:2px 9px; border-radius:999px; margin-right:5px; white-space:nowrap;
+         background:rgba(255,255,255,.05); border:1px solid rgba(150,168,255,.25); color:#8f9cc9; }
+  .svc.up { background:rgba(63,185,80,.14); border-color:rgba(63,185,80,.45); color:#7ee2a0; }
+  .mono { font-family: ui-monospace, Menlo, monospace; font-size:12.5px; background:rgba(5,8,20,.6);
+          border:1px solid rgba(130,150,255,.25); border-radius:10px; padding:6px 10px; margin:4px 0;
+          word-break: break-all; color:#cdd7ff; }
   #voice { background:rgba(255,233,168,.07); border:1px solid rgba(255,222,150,.32); border-radius:16px;
            padding:10px 14px; color:#ffedb5; }
   #voice:empty { display:none; }
@@ -192,6 +198,8 @@ PAGE = """<!DOCTYPE html>
     <div class="row"><span>Pose model</span><b id="msize"></b></div>
     <h2 style="margin-top:18px">🪞 Mirror self-test</h2><div id="selftest"><div class="muted">Not run yet.
     The robot will command itself, watch itself, and grade what its vision reports.</div></div>
+    <h2 style="margin-top:18px">📟 Board — Ventuno Q</h2><div id="board"><div class="muted">Reading the board…</div></div>
+    <div id="connect"></div>
   </aside>
 </div>
 <div class="panel ticker"><span class="ticker-title">📜 Learning timeline</span><div id="events"></div></div>
@@ -234,6 +242,30 @@ async function tick() {
     document.getElementById('msize').textContent = m.size_bytes ? m.size_bytes + ' bytes' : '–';
     const idle = s.idle || {};
     document.getElementById('cycles').textContent = idle.cycles || 0;
+    try {
+      const b = await (await fetch('/board.json')).json();
+      if (b && b.hostname) {
+        const up = b.uptime_s || 0, uh = Math.floor(up / 3600), um = Math.floor(up % 3600 / 60);
+        const svc = b.services || {};
+        const svcChip = (name, on) => `<span class="svc ${on ? 'up' : ''}">${on ? '●' : '○'} ${name}</span>`;
+        document.getElementById('board').innerHTML = `
+          <div class="row"><span>Status</span><b>${b.online ? '🟢 online' : '🔴 offline'}</b></div>
+          <div class="row"><span>Wi-Fi</span><b>${b.wifi_ssid || '—'} · ${(b.ips || {}).wifi || '—'}</b></div>
+          <div class="row"><span>Tailnet IP</span><b>${(b.ips || {}).tailnet || '—'}</b></div>
+          <div class="row"><span>CPU · Memory · Disk</span><b>${b.cpu_percent}% · ${b.mem_percent}% · ${b.disk_percent}%</b></div>
+          <div class="row"><span>Temperature · Uptime</span><b>${b.temp_c ?? '—'}°C · ${uh}h ${um}m</b></div>
+          <div style="margin:7px 0">${svcChip('arduino bridge', svc.arduino_router)}${svcChip('dashboard', svc.dashboard)}${svcChip('dreaming', svc.idle_learn)}${svcChip('camera', svc.vision)}</div>
+          <div class="row"><span>AI accelerator</span><b>${(b.ai || {}).accelerator || '—'}</b></div>
+          <div class="row"><span>Models run on</span><b>${(b.ai || {}).pose_model || '—'}</b></div>
+          <div class="muted">NPU: ${(b.ai || {}).npu_status || '—'}</div>`;
+        const c = b.connect || {};
+        document.getElementById('connect').innerHTML = `
+          <div style="margin-top:10px" class="muted">🔌 Connect to this board</div>
+          <div class="mono">${c.dashboard || ''}</div>
+          <div class="mono">${c.ssh || ''}</div>
+          <div class="muted">${c.note || ''}</div>`;
+      }
+    } catch (e) { /* board panel is best-effort */ }
     if (s.voice && s.voice.said)
       document.getElementById('voice').textContent = '🗣 “' + s.voice.said + '” — the robot, in its own words (Qwen3, local)';
     if (idle.last) { const L = idle.last;
@@ -672,6 +704,9 @@ class Handler(BaseHTTPRequestHandler):
                         p["status"] = "not in view"
                 state["projects"] = projects
             self._send(json.dumps(state), "application/json")
+        elif path == "/board.json":
+            board = read_json("board_state.json") or {}
+            self._send(json.dumps(board), "application/json")
         elif path in ("/latest.jpg", "/banner.jpg", "/dream_stand.jpg", "/dream_fallen.jpg",
                       "/dream_flipped.jpg"):
             jpg = os.path.join(HERE, path.lstrip("/"))

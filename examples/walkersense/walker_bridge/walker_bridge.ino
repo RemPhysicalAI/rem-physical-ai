@@ -1,14 +1,19 @@
-// WalkerSense — MCU side (STM32H5, Zephyr core), v2
+// WalkerSense — MCU side (STM32H5, Zephyr core), v3
 // Linux -> Arduino Bridge (MsgPack RPC via arduino-router) providers:
 //   matrix_fill(bool on)                    -> LED matrix all on/off (visible ack)
+//   matrix_text(String text)                -> scroll text on the LED matrix
+//                                              (the board shows its IP at boot)
 //   servo_set(int pin, int pulse_us)        -> set target pulse for a servo pin
 //   servo_run(int frames)                   -> emit `frames` 20ms frames of pulses
 //   servo_stop()                            -> clear all servo targets
 // Servo pulses are generated in software (precise delayMicroseconds timing),
 // so any digital pin works and no PWM/DTS config is involved.
 // SAFETY: pulse clamped to [500, 2500] us; frames clamped to [1, 100] (= max 2 s).
+// Bridge callbacks stay short: matrix_text only queues the text; the scroll
+// itself runs in loop().
 
 #include <Arduino_RouterBridge.h>
+#include <ArduinoGraphics.h>
 #include <Arduino_LED_Matrix.h>
 
 Arduino_LED_Matrix matrix;
@@ -21,7 +26,28 @@ bool matrix_fill(bool on) {
   return true;
 }
 
-// ---- servos -------------------------------------------------------------
+// ---- scrolling text on the LED matrix ------------------------------------
+static char pending_text[72];
+static volatile bool text_pending = false;
+
+bool matrix_text(String text) {
+  text.toCharArray(pending_text, sizeof(pending_text));
+  text_pending = true;
+  return true;
+}
+
+static void scroll_pending_text() {
+  char buf[sizeof(pending_text)];
+  strncpy(buf, pending_text, sizeof(buf));
+  buf[sizeof(buf) - 1] = '\0';
+  text_pending = false;
+  matrix.beginText(0, 0, 127, 0, 0);  // x, y, R, G, B
+  matrix.print(buf);
+  matrix.endText(SCROLL_LEFT);
+  matrix.loadFrame(FRAME_OFF);
+}
+
+// ---- servos ---------------------------------------------------------------
 #define MAX_SERVOS 8
 static int servo_pin[MAX_SERVOS];
 static int servo_us[MAX_SERVOS];
@@ -65,14 +91,18 @@ bool servo_stop() {
 
 void setup() {
   matrix.begin();
+  matrix.textFont(Font_5x7);
+  matrix.textScrollSpeed(90);
   matrix.loadFrame(FRAME_OFF);
   Bridge.begin();
   Bridge.provide("matrix_fill", matrix_fill);
+  Bridge.provide("matrix_text", matrix_text);
   Bridge.provide("servo_set", servo_set);
   Bridge.provide("servo_run", servo_run);
   Bridge.provide("servo_stop", servo_stop);
 }
 
 void loop() {
-  delay(100);
+  if (text_pending) scroll_pending_text();
+  delay(30);
 }
