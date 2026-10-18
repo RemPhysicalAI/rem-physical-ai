@@ -82,6 +82,13 @@ is simulated live in your browser from data — no video stream.
 
 Built with PyTorch + ExecuTorch + MuJoCo (all open source).
 
+## Team
+
+**One Dollar Computer** — Claudio Olmedo (captain) · claudio@claudioolmedo.com
+
+Built at the ExecuTorch Hackathon, Founders, Inc., San Francisco,
+October 17–18, 2026 (IoT track).
+
 ## License
 
 MIT — see `LICENSE`.
