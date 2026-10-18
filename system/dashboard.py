@@ -421,26 +421,23 @@ try {
 
 ABOUT_SLIDES = [
     ("slide1.jpg", "REM PhysicalAI",
-     "A system that lets any robot learn by itself. It watches, it learns, "
-     "and while it sleeps it dreams — practicing in its own little world — "
-     "and wakes up better. This little pup is our first student."),
+     "A system that lets any robot learn by itself. It watches, it learns — "
+     "and while it sleeps it dreams, practices in its own little world, and "
+     "wakes up better."),
     ("slide2.jpg", "The problem",
      "Robots leave the factory and never learn again. The smart ones cost a "
      "fortune, and their brains live far away, in the cloud. The affordable "
-     "ones cannot learn at all. So robots stay frozen — and never grow "
-     "with the people who own them."),
+     "ones cannot learn at all."),
     ("slide3.jpg", "How it works",
-     "Three simple ideas. It watches itself: it moves, sees what happened, "
-     "and learns from it — like a puppy. People can teach it: show it once, "
-     "and it remembers. And it dreams: when nobody needs it, it imagines "
-     "itself in a small simulated world and practices, without tiring its "
-     "real body. It only keeps a change if it truly got better."),
+     "It watches itself and learns from what it sees. People can teach it — "
+     "show it once, and it remembers. And it dreams: it practices in a little "
+     "simulated world, and only keeps a change if it truly got better."),
     ("slide4.jpg", "It is already alive",
      "All of this is already running, live, inside one small robot — no "
-     "internet, no cloud. Tonight, while nobody was using it, it dreamed "
-     "and improved by itself, again and again. A person taught it "
-     "something new, and it learned on the spot. And the PuppyPi in this "
-     "story is real: the robot in this photo is right here at this event."),
+     "internet, no cloud. Tonight it dreamed and improved by itself, again "
+     "and again. A person taught it something new, and it learned on the "
+     "spot. The robot in this photo is real — it is right here at this "
+     "event."),
     ("slide5.jpg", "The vision",
      "Any robot can have it: a one-dollar walker, this PuppyPi, any body "
      "at all. One system, many bodies. The intelligence lives inside the "
@@ -452,20 +449,16 @@ _ABOUT_CSS = """
          radial-gradient(900px 550px at 10% 0%, #251b4d 0%, transparent 55%),
          linear-gradient(180deg, #05070f, #0a0f22 60%, #0d1130);
          background-attachment: fixed; color:#e9edff; font-family: system-ui, sans-serif; margin:0; }
-  .slide { display:none; min-height:100vh; box-sizing:border-box; padding:28px 5vw 70px;
+  .slide { display:none; min-height:100vh; box-sizing:border-box; padding:24px 3vw 76px;
            flex-direction:column; align-items:center; justify-content:center; text-align:center; }
   .slide.on { display:flex; }
-  .slide img { max-width:min(880px, 92vw); max-height:52vh; border-radius:22px;
-               border:1px solid rgba(140,160,255,.3); object-fit:cover;
-               box-shadow: 0 18px 50px rgba(2,4,18,.6), 0 0 34px rgba(96,120,255,.18); }
+  .slide img { max-width:min(1240px, 95vw); max-height:84vh; border-radius:24px;
+               border:1px solid rgba(245,197,107,.35); object-fit:contain;
+               box-shadow: 0 24px 60px rgba(2,4,18,.65), 0 0 40px rgba(96,120,255,.16); }
   .pup { position:fixed; top:16px; right:16px; width:64px; height:64px; object-fit:cover; border-radius:20px;
          border:2px solid rgba(255,222,150,.55); box-shadow: 0 0 26px rgba(255,206,110,.35); z-index:5;
          animation: pupFloat 5.2s ease-in-out infinite; }
   @keyframes pupFloat { 0%,100% { transform: translateY(0) rotate(-1.6deg); } 50% { transform: translateY(-7px) rotate(1.6deg); } }
-  h1 { font-size:clamp(26px, 4.5vw, 44px); margin:22px 0 10px; text-shadow: 0 2px 22px rgba(90,110,255,.4); }
-  h1::after { content:""; display:block; width:74px; height:4px; border-radius:99px; margin:14px auto 2px;
-              background: linear-gradient(90deg, #f5c56b, #ffe9a8); box-shadow: 0 0 16px rgba(245,197,107,.55); }
-  p { font-size:clamp(15px, 2.2vw, 20px); line-height:1.55; color:#cdd7ff; max-width:760px; }
   .nav { position:fixed; bottom:18px; left:0; right:0; display:flex; gap:14px;
          justify-content:center; align-items:center; }
   .nav button { background:linear-gradient(135deg,#4c6fff,#8b5cf6); color:#fff; border:none; border-radius:999px;
@@ -480,8 +473,7 @@ ABOUT_PAGE = ("<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'>"
               "<title>REM PhysicalAI — about</title><link rel='icon' href='/logo.png'><style>" + _ABOUT_CSS + "</style></head><body>"
               "<img class='pup' src='/logo.png' alt='REM PhysicalAI'>"
               + "".join(
-                  f"<section class='slide'><img src='/about/{img}' alt=''>"
-                  f"<h1>{title}</h1><p>{text}</p></section>"
+                  f"<section class='slide'><img src='/about/{img}' alt='{title}'></section>"
                   for img, title, text in ABOUT_SLIDES)
               + """<div class='nav'><button onclick='go(-1)'>← Prev</button>
 <span id='counter'></span><button onclick='go(1)'>Next →</button></div>
