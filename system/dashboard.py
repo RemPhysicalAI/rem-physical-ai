@@ -150,7 +150,7 @@ PAGE = """<!DOCTYPE html>
     <div class="brand-tag">It learns by itself. It dreams while it sleeps — and wakes up better.</div>
   </div>
   <div class="top-meta">An independent self-learning system for any robot.<br>
-    Host robot: <b id="host">WalkerSense — ODC body + Ventuno Q brain</b> · <span id="updated"></span></div>
+    Robot under test: <b id="host">PuppyPi</b> · brain: Arduino Ventuno Q · <span id="updated"></span></div>
   <span class="zzz"><span style="font-size:12px">z</span> <span style="font-size:17px">z</span> <span style="font-size:23px">Z</span></span>
 </div>
 <div class="main">
@@ -225,7 +225,7 @@ async function tick() {
           <div class="proj-top"><b>${p.name}</b>
           <span class="chip ${p.control === 'full' ? 'ctl' : 'drm'}">${p.control === 'full' ? '⚙️ full control' : '🌙 dream only'}</span></div>
           <div class="muted">${p.what}</div>
-          <div class="proj-status">${p.status === 'in view now' ? '📷 in view now — preparing to dream about it' : (p.status === 'on this board' ? '🏠 on this board' : '📷 not in view')}</div>
+          <div class="proj-status">${p.status === 'under test' ? '🧪 under test — it dreams about this robot and trains it virtually' : (p.status === 'in view now' ? '📷 in view now — preparing to dream about it' : (p.status === 'on this board' ? '🏠 on this board' : '📷 not in view'))}</div>
         </div>`).join('');
     }
     document.getElementById('probes').innerHTML = (s.probes || []).map(p => `
@@ -696,7 +696,9 @@ class Handler(BaseHTTPRequestHandler):
             if projects:
                 vz = (vision or {}).get("zone")
                 for p in projects.get("projects", []):
-                    if p.get("control") == "full":
+                    if p.get("under_test"):
+                        p["status"] = "under test"
+                    elif p.get("control") == "full":
                         p["status"] = "on this board"
                     elif vz and vz not in ("absent", "watching"):
                         p["status"] = "in view now"
