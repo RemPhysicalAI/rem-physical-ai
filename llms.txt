@@ -1,0 +1,25 @@
+# REM PhysicalAI
+
+> A self-learning system for robots: it learns by itself, dreams in a
+> physics simulation while it sleeps, verifies every new model against
+> fixed probes, and wakes up better. Built for the Arduino Ventuno Q
+> (not yet on sale). All inference on-device with ExecuTorch; no cloud.
+
+For AI agents: start with AGENTS.md in this repository — it is the
+operating contract (deploy steps, board facts, invariants).
+
+## Docs
+
+- [How it works](docs/HOW-IT-WORKS.md): the concepts, in plain words
+- [Setup on the Ventuno Q](docs/SETUP.md): running in minutes
+- [Commands](docs/COMMANDS.md): chat commands, teaching, camera teaching
+- [Implement with an agent](docs/FOR-AGENTS.md): agent + human, zero to dreaming, with a verification checklist
+- [AGENTS.md](AGENTS.md): instructions for coding agents working in this repo
+
+## Key entry points
+
+- Deploy: `./quickstart.sh` (then flash `examples/walkersense/walker_bridge` via serial)
+- Interface: `system/dashboard.py` → http://<board>:8080
+- Dream engine: `system/idle_learn.py`
+- Teaching: `system/teach.py` (add / retrain)
+- Dream world: `dreamworld/dream_sim.py`, `dreamworld/dream_replay.py`

@@ -56,6 +56,9 @@ Full guide: [docs/SETUP.md](docs/SETUP.md)
 - [How it works](docs/HOW-IT-WORKS.md) — the ideas, in plain words
 - [Setup on the Ventuno Q](docs/SETUP.md) — running in minutes
 - [Commands](docs/COMMANDS.md) — talk to the robot: chat, teaching, dreams
+- [Implement with an agent](docs/FOR-AGENTS.md) — bring your AI agent:
+  zero to a dreaming robot, with a verification checklist
+- [AGENTS.md](AGENTS.md) — the operating contract for coding agents
 
 ## What's inside
 
