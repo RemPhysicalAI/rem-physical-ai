@@ -1,5 +1,7 @@
 # DreamRobot
 
+![A robot dreaming under the moon](system/banner.jpg)
+
 **A self-improvement system for any robot.**
 
 DreamRobot is an independent learning layer that installs on a robot.

@@ -29,60 +29,85 @@ PAGE = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DreamRobot — self-learning system</title>
 <style>
-  body { background:#0d1117; color:#e6edf3; font-family: system-ui, sans-serif;
-         margin:0; padding:20px; }
-  h1 { font-size:24px; margin:0 0 2px; } .sub { color:#8b949e; margin-bottom:18px; }
-  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap:14px; }
-  .card { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:14px 16px; }
-  .card h2 { font-size:13px; text-transform:uppercase; letter-spacing:.07em; color:#8b949e; margin:0 0 10px; }
+  * { box-sizing: border-box; }
+  body { background: radial-gradient(1200px 700px at 75% -10%, #1b2350 0%, transparent 60%),
+         radial-gradient(1000px 600px at 10% 0%, #251b4d 0%, transparent 55%),
+         linear-gradient(180deg, #05070f 0%, #0a0f22 55%, #0d1130 100%);
+         background-attachment: fixed; color:#e9edff; font-family: system-ui, sans-serif;
+         margin:0; padding:22px; min-height:100vh; }
+  .hero { position:relative; border-radius:20px; overflow:hidden; margin-bottom:14px;
+          border:1px solid rgba(140,160,255,.25); box-shadow: 0 18px 50px rgba(2,4,18,.65); }
+  .hero img { width:100%; height:230px; object-fit:cover; object-position:center 63%; display:block;
+              animation: heroFloat 26s ease-in-out infinite alternate; }
+  @keyframes heroFloat { from { transform: scale(1) translateY(0); } to { transform: scale(1.07) translateY(-6px); } }
+  .hero .veil { position:absolute; inset:0; background:linear-gradient(90deg, rgba(4,6,18,.85) 0%, rgba(4,6,18,.45) 48%, rgba(4,6,18,0) 78%); }
+  .hero .txt { position:absolute; left:26px; bottom:20px; right:26px; }
+  .hero h1 { font-size:37px; margin:0; font-weight:800; text-shadow: 0 2px 24px rgba(90,110,255,.45); }
+  .hero .tag { color:#cdd7ff; font-size:15.5px; margin-top:5px; text-shadow: 0 1px 10px rgba(0,0,0,.65); }
+  .pill { display:inline-block; padding:2px 11px; border-radius:999px; font-size:12.5px; vertical-align:middle;
+          background:rgba(63,185,80,.16); border:1px solid rgba(63,185,80,.45); color:#7ee2a0; margin-left:6px; }
+  .sub { color:#9aa7d4; margin:2px 2px 16px; font-size:13.5px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:15px; }
+  .card { background: linear-gradient(180deg, rgba(23,30,58,.82), rgba(13,18,38,.88));
+          border:1px solid rgba(130,150,255,.18); border-radius:16px; padding:16px 18px;
+          box-shadow: 0 10px 30px rgba(2,4,16,.5); }
+  .card h2 { font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:#aebaff; margin:0 0 12px; }
   .probe { margin:10px 0; } .probe .lbl { display:flex; justify-content:space-between; font-size:14px; }
-  .bar { height:10px; background:#21262d; border-radius:5px; overflow:hidden; margin-top:4px; }
+  .bar { height:10px; background:rgba(255,255,255,.07); border-radius:5px; overflow:hidden; margin-top:4px; }
   .fill { height:100%; border-radius:5px; transition: width .6s; }
-  .ok { background:#3fb950; } .bad { background:#f85149; } .see { background:#58a6ff; }
-  .big { font-size:30px; font-weight:700; } .muted { color:#8b949e; font-size:13px; }
-  .evt { font-size:13px; padding:6px 0; border-bottom:1px solid #21262d; }
+  .ok { background:linear-gradient(90deg,#2ea043,#3fb950); } .bad { background:linear-gradient(90deg,#d73a49,#f85149); } .see { background:linear-gradient(90deg,#4c8dff,#58a6ff); }
+  .big { font-size:32px; font-weight:800; } .muted { color:#8f9cc9; font-size:13px; }
+  .evt { font-size:13px; padding:6px 0; border-bottom:1px solid rgba(130,150,255,.1); }
   .evt b { color:#d2a8ff; font-weight:600; } .kept { color:#3fb950; } .disc { color:#d29922; }
-  #live { color:#3fb950; } .row { display:flex; justify-content:space-between; margin:4px 0; font-size:14px; }
-  img.cam { width:100%; border-radius:8px; border:1px solid #30363d; background:#000; }
+  #live { color:#7ee2a0; } .row { display:flex; justify-content:space-between; margin:4px 0; font-size:14px; }
+  img.cam { width:100%; border-radius:12px; border:1px solid rgba(130,150,255,.22); background:#000; }
+  #dreamCanvas { border:1px solid rgba(140,160,255,.4) !important; animation: dreamPulse 3.4s ease-in-out infinite; }
+  @keyframes dreamPulse { 0%,100% { box-shadow: 0 0 20px rgba(96,120,255,.22); } 50% { box-shadow: 0 0 42px rgba(150,130,255,.42); } }
   .zone { font-size:20px; font-weight:700; }
 </style></head><body>
-<h1>🌙 DreamRobot <span id="live">● live</span></h1>
-<div class="sub">An independent self-learning system for any robot. It learns by itself,
-dreams while it sleeps, and wakes up better. <span class="muted">Host robot: <b id="host">WalkerSense — ODC body + Ventuno Q brain</b> · <span id="updated"></span></span></div>
+<div class="hero">
+  <img src="/banner.jpg" alt="A robot dreaming under the moon">
+  <div class="veil"></div>
+  <div class="txt">
+    <h1>🌙 DreamRobot <span class="pill" id="live">● live</span></h1>
+    <div class="tag">It learns by itself. It dreams while it sleeps — and wakes up better.</div>
+  </div>
+</div>
+<div class="sub">An independent self-learning system for any robot. Host robot: <b id="host">WalkerSense — ODC body + Ventuno Q brain</b> · <span id="updated"></span></div>
 <div class="grid">
-  <div class="card"><h2>Eyes — what the robot sees</h2>
+  <div class="card"><h2>👀 Eyes — what the robot sees</h2>
     <img class="cam" id="cam" alt="camera preview">
     <div class="row" style="margin-top:8px"><span class="zone" id="zone">—</span><b id="zconf"></b></div>
     <div class="muted" id="zprobs"></div></div>
-  <div class="card"><h2>The dream — simulation</h2>
+  <div class="card"><h2>🌙 The dream — simulation</h2>
     <canvas id="dreamCanvas" style="width:100%;display:block;background:#0a0e14;border-radius:8px;border:1px solid #30363d"></canvas>
     <img class="cam" id="dreamFallback" alt="dream" style="display:none">
     <div class="row" style="margin-top:6px"><span id="dreamScene">the dream</span><b>simulation</b></div>
     <div class="muted">The robot dreams in a physics simulation and sends only the data —
     your screen rebuilds the dream locally. No video, no delay.</div></div>
-  <div class="card"><h2>What it believes (probe poses)</h2><div id="probes"></div>
+  <div class="card"><h2>🧠 What it believes</h2><div id="probes"></div>
     <div class="row"><span>Probe accuracy</span><b id="acc"></b></div>
     <div class="row"><span>Mean confidence</span><b id="conf"></b></div></div>
-  <div class="card"><h2>Dreaming (idle self-learning)</h2>
+  <div class="card"><h2>💤 Dreaming — idle self-learning</h2>
     <div class="big"><span id="cycles">0</span> <span class="muted" style="font-size:15px">dream cycles</span></div>
     <div id="voice" style="font-size:17px; font-style:italic; margin:6px 0"></div>
     <div id="last"></div>
     <div class="muted" style="margin-top:8px">While idle, the robot dreams variations of what it knows,
     retrains itself, and keeps the new model only if the probes do not regress.</div>
-    <h2 style="margin-top:16px">Memory</h2>
+    <h2 style="margin-top:16px">💾 Memory</h2>
     <div class="row"><span>Labeled samples on device</span><b id="total"></b></div>
     <div class="row"><span>Seed · taught by a human</span><b><span id="base"></span> · <span id="taught"></span></b></div>
     <div class="row"><span>Pose model</span><b id="msize"></b></div></div>
-  <div class="card"><h2>Mirror self-test</h2><div id="selftest"><div class="muted">Not run yet.
+  <div class="card"><h2>🪞 Mirror self-test</h2><div id="selftest"><div class="muted">Not run yet.
     The robot will command itself, watch itself, and grade what its vision reports.</div></div></div>
-  <div class="card"><h2>Talk to the robot</h2>
+  <div class="card"><h2>💬 Talk to the robot</h2>
     <div id="chatLog" style="height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
     <form id="chatForm" style="display:flex;gap:6px">
       <input id="chatInput" autocomplete="off" placeholder="caminhe · levanta · cai · vira · acende · fala · estado"
-        style="flex:1;background:#0a0e14;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:8px">
-      <button type="submit" style="background:#1f6feb;border:none;color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer">Send</button>
+        style="flex:1;background:rgba(5,8,20,.7);border:1px solid rgba(130,150,255,.3);border-radius:10px;color:#e9edff;padding:9px">
+      <button type="submit" style="background:linear-gradient(135deg,#4c6fff,#8b5cf6);border:none;color:#fff;border-radius:10px;padding:9px 16px;cursor:pointer;font-weight:600">Send</button>
     </form></div>
-  <div class="card"><h2>Learning timeline</h2><div id="events"></div></div>
+  <div class="card"><h2>📜 Learning timeline</h2><div id="events"></div></div>
 </div>
 <script>
 async function tick() {
@@ -142,8 +167,8 @@ function chatAdd(who, text) {
   const d = document.createElement('div');
   d.innerHTML = '<b>' + who + ':</b> ' + text;
   d.style.cssText = who === 'you'
-    ? 'align-self:flex-end;background:#1f6feb22;border:1px solid #1f6feb55;padding:6px 9px;border-radius:10px;max-width:92%'
-    : 'align-self:flex-start;background:#161b22;border:1px solid #30363d;padding:6px 9px;border-radius:10px;max-width:92%';
+    ? 'align-self:flex-end;background:rgba(76,110,255,.18);border:1px solid rgba(124,140,255,.5);padding:6px 9px;border-radius:10px;max-width:92%'
+    : 'align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(130,150,255,.25);padding:6px 9px;border-radius:10px;max-width:92%';
   chatLog.appendChild(d); chatLog.scrollTop = chatLog.scrollHeight;
 }
 chatAdd('robot', 'Diz-me o que fazer: caminhe, levanta, cai, vira, sonha, acende, apaga, fala, estado.');
@@ -376,19 +401,24 @@ ABOUT_SLIDES = [
 ]
 
 _ABOUT_CSS = """
-  body { background:#0d1117; color:#e6edf3; font-family: system-ui, sans-serif; margin:0; }
+  body { background: radial-gradient(1100px 650px at 75% -10%, #1b2350 0%, transparent 60%),
+         radial-gradient(900px 550px at 10% 0%, #251b4d 0%, transparent 55%),
+         linear-gradient(180deg, #05070f, #0a0f22 60%, #0d1130);
+         background-attachment: fixed; color:#e9edff; font-family: system-ui, sans-serif; margin:0; }
   .slide { display:none; min-height:100vh; box-sizing:border-box; padding:28px 5vw 70px;
            flex-direction:column; align-items:center; justify-content:center; text-align:center; }
   .slide.on { display:flex; }
-  .slide img { max-width:min(880px, 92vw); max-height:52vh; border-radius:14px;
-               border:1px solid #30363d; object-fit:cover; }
-  h1 { font-size:clamp(26px, 4.5vw, 44px); margin:22px 0 10px; }
-  p { font-size:clamp(15px, 2.2vw, 20px); line-height:1.55; color:#c9d1d9; max-width:760px; }
+  .slide img { max-width:min(880px, 92vw); max-height:52vh; border-radius:16px;
+               border:1px solid rgba(140,160,255,.3); object-fit:cover;
+               box-shadow: 0 18px 50px rgba(2,4,18,.6), 0 0 34px rgba(96,120,255,.18); }
+  h1 { font-size:clamp(26px, 4.5vw, 44px); margin:22px 0 10px; text-shadow: 0 2px 22px rgba(90,110,255,.4); }
+  p { font-size:clamp(15px, 2.2vw, 20px); line-height:1.55; color:#cdd7ff; max-width:760px; }
   .nav { position:fixed; bottom:18px; left:0; right:0; display:flex; gap:14px;
          justify-content:center; align-items:center; }
-  .nav button { background:#21262d; color:#e6edf3; border:1px solid #30363d; border-radius:8px;
-                padding:9px 18px; font-size:15px; cursor:pointer; }
-  .nav span { color:#8b949e; font-size:14px; }
+  .nav button { background:linear-gradient(135deg,#4c6fff,#8b5cf6); color:#fff; border:none; border-radius:10px;
+                padding:10px 20px; font-size:15px; cursor:pointer; font-weight:600;
+                box-shadow: 0 6px 20px rgba(80,90,255,.35); }
+  .nav span { color:#9aa7d4; font-size:14px; }
   a { color:#58a6ff; }
 """
 
@@ -522,7 +552,7 @@ class Handler(BaseHTTPRequestHandler):
             if voice:
                 state["voice"] = voice
             self._send(json.dumps(state), "application/json")
-        elif path in ("/latest.jpg", "/dream_stand.jpg", "/dream_fallen.jpg",
+        elif path in ("/latest.jpg", "/banner.jpg", "/dream_stand.jpg", "/dream_fallen.jpg",
                       "/dream_flipped.jpg"):
             jpg = os.path.join(HERE, path.lstrip("/"))
             if os.path.exists(jpg):

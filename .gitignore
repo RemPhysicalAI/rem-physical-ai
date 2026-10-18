@@ -1,5 +1,5 @@
 __pycache__/
-*.prev.pte
-*.new.pte
-*.candidate.pte
-dataset/
+*.pyc
+dream_samples_mujoco.json
+dream_replay.json
+media-generation-*
