@@ -446,8 +446,8 @@ try {
     const g = new THREE.Group(); groups[name] = g; scene.add(g);
   }
   const loader = new STLLoader();
-  const mat = new THREE.MeshStandardMaterial({color: 0x93a7cc,
-    metalness: 0.35, roughness: 0.45});
+  const mat = new THREE.MeshStandardMaterial({color: 0x23242c,
+    metalness: 0.55, roughness: 0.5});
   await Promise.all(meta.parts.map(async (p) => {
     const geo = await loader.loadAsync('/meshes/' + p.mesh + '.STL');
     const mesh = new THREE.Mesh(geo, mat);
@@ -498,6 +498,7 @@ try {
       flipped: {pos: [0, 0, 0.07], roll: Math.PI, loop: 2.2},
     };
     const ORDER = ['standing', 'walking', 'fallen', 'flipped'];
+    const AUTO = ['standing', 'walking'];
     function setScene(name) {
       const cfg = SCENES[name]; if (!cfg) return;
       try { mujoco.mj_resetData(model, sim.data); }
@@ -528,7 +529,7 @@ try {
         sim.auto += clock.getDelta();
         if (sim.auto > 8) {
           sim.auto = 0;
-          setScene(ORDER[(ORDER.indexOf(sim.scene) + 1) % ORDER.length]);
+          setScene(AUTO[(AUTO.indexOf(sim.scene) + 1) % AUTO.length]);
         }
       }
       const dt = Math.min(clock.getDelta(), 0.05);
@@ -539,11 +540,11 @@ try {
           try {
             const t = sim.data.time;
             const fx = sim.data.xfrc_applied;
-            fx[6 + 3] = 1.0 * Math.sin(2 * Math.PI * 2.0 * t + Math.PI / 2);
-            fx[6 + 4] = 1.2 * Math.sin(2 * Math.PI * 2.0 * t);
+            fx[6 + 3] = 0.25 * Math.sin(2 * Math.PI * 2.0 * t + Math.PI / 2);
+            fx[6 + 4] = 0.30 * Math.sin(2 * Math.PI * 2.0 * t);
           } catch (e) {}
           if (sim.data.qvel[0] < 0.25) sim.data.qvel[0] = 0.8;
-          if (Math.abs(sim.data.qpos[0]) > 0.5) sim.data.qpos[0] = 0;
+          if (Math.abs(sim.data.qpos[0]) > 0.35) sim.data.qpos[0] = 0;
         }
         mujoco.mj_step(model, sim.data);
         sim.t += model.opt.timestep;
