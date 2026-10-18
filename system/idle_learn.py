@@ -81,7 +81,20 @@ def evaluate(model_path):
 
 
 def build_dreams(samples, rng):
-    """Interpolate between same-class memories: imagined in-between poses."""
+    """The dream source: MuJoCo physics dreams of the robot's twin.
+
+    dream_sim.py rolls the twin through standing/walking/fallen/flipped
+    in the 3D physics world and records what its IMU would feel; those
+    are the dreams the brain trains on. (Fallback, only if the MuJoCo
+    dream file is missing: interpolate between same-class memories.)
+    """
+    mujoco_dreams = os.path.join(HERE, "..", "dreamworld",
+                                 "dream_samples_mujoco.json")
+    if os.path.exists(mujoco_dreams):
+        with open(mujoco_dreams) as f:
+            dreams = json.load(f)
+        rng.shuffle(dreams)
+        return dreams
     dreams = []
     by_class = {}
     for s in samples:

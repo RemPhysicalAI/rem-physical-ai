@@ -41,17 +41,30 @@ def quat_up_and_gravity(q):
     return (ax, ay, az), az
 
 
-def rollout(model, data, quat, z, seconds, push=None, sample_every=0.05):
+def rollout(model, data, quat, z, seconds, push=None, rock=False,
+            sample_every=0.05):
     mujoco.mj_resetData(model, data)
     data.qpos[0:3] = [0, 0, z]
     data.qpos[3:7] = quat
     data.ctrl[:] = 0.0
+    base_body = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "base_link")
     steps = int(seconds / model.opt.timestep)
     every = max(1, int(sample_every / model.opt.timestep))
     feats = []
     for i in range(steps):
         if push is not None and i == steps // 3:
             data.qvel[0:3] = push
+        if rock:
+            # Real walking rocks the body on BOTH axes (~2 Hz pitch and
+            # roll, phase-shifted, like a quadruped's gait), so the
+            # gyroscope carries a true walking signature on every axis.
+            # A pure slide feels identical to standing to an IMU —
+            # because it is.
+            t = i * model.opt.timestep
+            data.xfrc_applied[base_body] = [
+                0, 0, 0,
+                1.0 * math.sin(2 * math.pi * 2.0 * t + math.pi / 2),
+                1.2 * math.sin(2 * math.pi * 2.0 * t), 0]
         mujoco.mj_step(model, data)
         if i % every == 0 or i == steps - 1:
             (ax, ay, az), _ = quat_up_and_gravity(data.qpos[3:7])
@@ -78,23 +91,23 @@ def main():
     data = mujoco.MjData(model)
 
     scenarios = {
-        # class: (quat, z, seconds, push) builders
+        # class: (quat, z, seconds, push, rock) builders
         "standing": lambda: (euler_quat(rng.uniform(-0.06, 0.06),
-                                        rng.uniform(-0.06, 0.06)), 0.11, 1.2, None),
+                                        rng.uniform(-0.06, 0.06)), 0.11, 1.2, None, False),
         "walking": lambda: (euler_quat(0, 0), 0.11, 1.2,
-                            [rng.uniform(0.2, 0.5), 0, 0]),
+                            [rng.uniform(0.2, 0.5), 0, 0], True),
         "fallen": lambda: (euler_quat(math.radians(90) + rng.uniform(-0.15, 0.15),
-                                      rng.uniform(-0.1, 0.1)), 0.07, 1.2, None),
+                                      rng.uniform(-0.1, 0.1)), 0.07, 1.2, None, False),
         "flipped": lambda: (euler_quat(math.pi + rng.uniform(-0.12, 0.12),
-                                        rng.uniform(-0.1, 0.1)), 0.07, 1.2, None),
+                                        rng.uniform(-0.1, 0.1)), 0.07, 1.2, None, False),
     }
 
     samples = []
     per = max(1, args.dreams // len(CLASSES))
     for label, name in enumerate(CLASSES):
         for _ in range(per):
-            quat, z, secs, push = scenarios[name]()
-            for feats in rollout(model, data, quat, z, secs, push):
+            quat, z, secs, push, rock = scenarios[name]()
+            for feats in rollout(model, data, quat, z, secs, push, rock):
                 samples.append({"features": feats, "label": label,
                                 "source": "dream-mujoco"})
     rng.shuffle(samples)

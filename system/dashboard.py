@@ -18,6 +18,8 @@ selftest_state.json (selftest.py), events.log (everything, in order).
 import argparse
 import json
 import os
+import subprocess
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -52,14 +54,12 @@ dreams while it sleeps, and wakes up better. <span class="muted">Host robot: <b 
     <img class="cam" id="cam" alt="camera preview">
     <div class="row" style="margin-top:8px"><span class="zone" id="zone">—</span><b id="zconf"></b></div>
     <div class="muted" id="zprobs"></div></div>
-  <div class="card"><h2>Dream simulator — what it's dreaming</h2>
-    <img class="cam" id="dream3d" alt="MuJoCo dream world">
-    <div class="muted" style="margin:4px 0 10px">The dream world: the PuppyPi twin in MuJoCo 3D,
-    rendered by the robot itself. Below, the poses it is rehearsing.</div>
-    <canvas id="dreamCanvas" width="460" height="240" style="width:100%;background:#0a0e14;border-radius:8px;border:1px solid #30363d"></canvas>
-    <div class="row" style="margin-top:6px"><span id="dreamCaption">loading dreams…</span><b id="dreamCount"></b></div>
-    <div class="muted">Each frame is one imagined pose from the robot's current dream batch —
-    rehearsals it generated from its own memories while idle.</div></div>
+  <div class="card"><h2>The dream — simulation</h2>
+    <canvas id="dreamCanvas" style="width:100%;display:block;background:#0a0e14;border-radius:8px;border:1px solid #30363d"></canvas>
+    <img class="cam" id="dreamFallback" alt="dream" style="display:none">
+    <div class="row" style="margin-top:6px"><span id="dreamScene">the dream</span><b>simulation</b></div>
+    <div class="muted">The robot dreams in a physics simulation and sends only the data —
+    your screen rebuilds the dream locally. No video, no delay.</div></div>
   <div class="card"><h2>What it believes (probe poses)</h2><div id="probes"></div>
     <div class="row"><span>Probe accuracy</span><b id="acc"></b></div>
     <div class="row"><span>Mean confidence</span><b id="conf"></b></div></div>
@@ -75,6 +75,13 @@ dreams while it sleeps, and wakes up better. <span class="muted">Host robot: <b 
     <div class="row"><span>Pose model</span><b id="msize"></b></div></div>
   <div class="card"><h2>Mirror self-test</h2><div id="selftest"><div class="muted">Not run yet.
     The robot will command itself, watch itself, and grade what its vision reports.</div></div></div>
+  <div class="card"><h2>Talk to the robot</h2>
+    <div id="chatLog" style="height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+    <form id="chatForm" style="display:flex;gap:6px">
+      <input id="chatInput" autocomplete="off" placeholder="caminhe · levanta · cai · vira · acende · fala · estado"
+        style="flex:1;background:#0a0e14;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:8px">
+      <button type="submit" style="background:#1f6feb;border:none;color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer">Send</button>
+    </form></div>
   <div class="card"><h2>Learning timeline</h2><div id="events"></div></div>
 </div>
 <script>
@@ -82,8 +89,6 @@ async function tick() {
   try {
     const s = await (await fetch('/state.json')).json();
     document.getElementById('updated').textContent = 'updated ' + (s.updated || '');
-    const dimg = document.getElementById('dream3d');
-    if (dimg) dimg.src = '/dream3d.jpg?t=' + Date.now();
     const v = s.vision || {};
     if (v.zone) {
       document.getElementById('cam').src = '/latest.jpg?t=' + Date.now();
@@ -129,45 +134,132 @@ async function tick() {
     document.getElementById('live').textContent = '● live';
   } catch (e) { document.getElementById('live').textContent = '○ reconnecting'; }
 }
-let dreams = [], di = 0;
-const DCLS = ['standing', 'walking', 'fallen', 'flipped'];
-const DCOL = {standing: '#3fb950', walking: '#58a6ff', fallen: '#d29922', flipped: '#f85149'};
-async function loadDreams() {
-  try { const d = await (await fetch('/dreams.json')).json(); dreams = d.dreams || [];
-    document.getElementById('dreamCount').textContent = dreams.length ? dreams.length + ' poses in this dream' : '';
-  } catch (e) {}
-}
-function drawDream() {
-  const c = document.getElementById('dreamCanvas');
-  if (!c || !dreams.length) return;
-  const ctx = c.getContext('2d'), W = c.width, H = c.height;
-  const s = dreams[di % dreams.length]; di++;
-  const [ax, , az, gx] = s.features;
-  const tilt = Math.atan2(ax, az);
-  const cls = DCLS[s.label] || 'standing';
-  ctx.clearRect(0, 0, W, H);
-  const groundY = H - 30;
-  ctx.strokeStyle = '#30363d'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(W, groundY); ctx.stroke();
-  const cx = W / 2;
-  const lift = Math.max(0, Math.cos(tilt)) * 36;
-  const by = groundY - 16 - lift;
-  const stride = cls === 'walking' ? Math.sin(Date.now() / 130) * 9 : 0;
-  ctx.save(); ctx.translate(cx, by); ctx.rotate(tilt);
-  ctx.strokeStyle = '#8b949e'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-  [[-30, stride], [-12, -stride], [14, -stride], [32, stride]].forEach(([lx, sw]) => {
-    ctx.beginPath(); ctx.moveTo(lx, 10); ctx.lineTo(lx + sw * 0.4, 22); ctx.lineTo(lx + sw, 34); ctx.stroke();
-  });
-  ctx.fillStyle = DCOL[cls]; ctx.beginPath(); ctx.roundRect(-44, -13, 88, 26, 6); ctx.fill();
-  ctx.fillStyle = '#e6edf3'; ctx.fillRect(36, -17, 15, 13);
-  ctx.beginPath(); ctx.arc(41, -10, 2.4, 0, 7); ctx.fillStyle = '#0d1117'; ctx.fill();
-  ctx.restore();
-  const deg = Math.round(tilt * 180 / Math.PI);
-  document.getElementById('dreamCaption').textContent =
-    `dreaming: ${cls} · tilt ${deg}° · ${s.source === 'dream' ? 'imagined from memory' : 'a memory'}`;
-}
-loadDreams(); setInterval(loadDreams, 15000); setInterval(drawDream, 900);
 tick(); setInterval(tick, 3000);
+</script>
+<script>
+const chatLog = document.getElementById('chatLog');
+function chatAdd(who, text) {
+  const d = document.createElement('div');
+  d.innerHTML = '<b>' + who + ':</b> ' + text;
+  d.style.cssText = who === 'you'
+    ? 'align-self:flex-end;background:#1f6feb22;border:1px solid #1f6feb55;padding:6px 9px;border-radius:10px;max-width:92%'
+    : 'align-self:flex-start;background:#161b22;border:1px solid #30363d;padding:6px 9px;border-radius:10px;max-width:92%';
+  chatLog.appendChild(d); chatLog.scrollTop = chatLog.scrollHeight;
+}
+chatAdd('robot', 'Diz-me o que fazer: caminhe, levanta, cai, vira, sonha, acende, apaga, fala, estado.');
+document.getElementById('chatForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const inp = document.getElementById('chatInput');
+  const text = inp.value.trim(); if (!text) return; inp.value = '';
+  chatAdd('you', text.replace(/</g, '&lt;'));
+  try {
+    const r = await (await fetch('/command', {method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text})})).json();
+    chatAdd('robot', r.reply || '…');
+    if (r.scene !== undefined) window.__dreamScene = r.scene;
+    if (r.reload) window.__dreamReload = true;
+  } catch (err) { chatAdd('robot', 'Sem ligação ao robô agora.'); }
+});
+setTimeout(() => {
+  if (!window.__dreamReady) {
+    const img = document.getElementById('dreamFallback');
+    img.style.display = 'block'; img.src = '/dream_stand.jpg';
+    document.getElementById('dreamCanvas').style.display = 'none';
+  }
+}, 9000);
+</script>
+<script type="importmap">
+{"imports": {"three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+             "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+const LABELS = {standing: 'dreaming: standing', walking: 'dreaming: walking',
+  fallen: 'dreaming: fallen on its side', flipped: 'dreaming: flipped upside down'};
+try {
+  let data = await (await fetch('/dream_replay.json')).json();
+  let frames = data.frames;
+  const canvas = document.getElementById('dreamCanvas');
+  const renderer = new THREE.WebGLRenderer({canvas, antialias: true});
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0e14);
+  scene.fog = new THREE.Fog(0x0a0e14, 1.7, 3.4);
+  const camera = new THREE.PerspectiveCamera(42, 4 / 3, 0.01, 20);
+  camera.position.set(0.58, -0.74, 0.44);
+  camera.up.set(0, 0, 1); camera.lookAt(0, 0, 0.05);
+  scene.add(new THREE.HemisphereLight(0xbdd3ff, 0x1a2030, 1.15));
+  const key = new THREE.DirectionalLight(0xffffff, 2.2);
+  key.position.set(0.4, -0.5, 0.9); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x6ea8ff, 1.1);
+  rim.position.set(-0.6, 0.5, 0.4); scene.add(rim);
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(1.4, 48),
+    new THREE.MeshStandardMaterial({color: 0x11161d, roughness: 1}));
+  scene.add(ground);
+  const grid = new THREE.PolarGridHelper(1.2, 12, 6, 48, 0x2b3a4d, 0x1c2735);
+  grid.rotation.x = Math.PI / 2; grid.position.z = 0.001; scene.add(grid);
+  const groups = {};
+  for (const name of data.bodies) {
+    const g = new THREE.Group(); groups[name] = g; scene.add(g);
+  }
+  const loader = new STLLoader();
+  const mat = new THREE.MeshStandardMaterial({color: 0x93a7cc,
+    metalness: 0.35, roughness: 0.45});
+  await Promise.all(data.parts.map(async (p) => {
+    const geo = await loader.loadAsync('/meshes/' + p.mesh + '.STL');
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(p.pos[0], p.pos[1], p.pos[2]);
+    mesh.quaternion.set(p.quat[1], p.quat[2], p.quat[3], p.quat[0]);
+    groups[p.body].add(mesh);
+  }));
+  window.__dreamReady = true;
+  document.getElementById('dreamFallback').style.display = 'none';
+  canvas.style.display = 'block';
+  function resize() {
+    const w = canvas.clientWidth || 460;
+    renderer.setSize(w, Math.round(w * 0.72), false);
+  }
+  resize(); window.addEventListener('resize', resize);
+  const clock = new THREE.Clock();
+  let fi = 0;
+  function range() {
+    const want = window.__dreamScene;
+    if (!want) return [0, frames.length - 1];
+    let a = -1, b = -1;
+    frames.forEach((f, i) => { if (f.scene === want) { if (a < 0) a = i; b = i; } });
+    return a < 0 ? [0, frames.length - 1] : [a, b];
+  }
+  const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
+  function applyPose(fa, fb, t) {
+    data.bodies.forEach((name, bi) => {
+      const A = fa.bodies[bi], B = fb.bodies[bi], g = groups[name];
+      g.position.set(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t,
+                     A[2] + (B[2] - A[2]) * t);
+      qa.set(A[4], A[5], A[6], A[3]); qb.set(B[4], B[5], B[6], B[3]);
+      qa.slerp(qb, t); g.quaternion.copy(qa);
+    });
+  }
+  renderer.setAnimationLoop(() => {
+    if (window.__dreamReload) {
+      window.__dreamReload = false;
+      fetch('/dream_replay.json').then(r => r.json())
+        .then(d => { data = d; frames = d.frames; fi = 0; });
+    }
+    const [a, b] = range();
+    fi += clock.getDelta() * data.fps;
+    if (fi < a || fi > b) fi = a;
+    const i0 = Math.min(Math.floor(fi), b), i1 = Math.min(i0 + 1, b);
+    applyPose(frames[i0], frames[i1], Math.min(fi - Math.floor(fi), 1));
+    document.getElementById('dreamScene').textContent =
+      LABELS[frames[i0].scene] || 'the dream';
+    renderer.render(scene, camera);
+  });
+} catch (e) {
+  const img = document.getElementById('dreamFallback');
+  img.style.display = 'block'; img.src = '/dream_stand.jpg';
+  document.getElementById('dreamCanvas').style.display = 'none';
+}
 </script></body></html>"""
 
 
@@ -244,6 +336,65 @@ def read_json(name):
     return None
 
 
+def _norm(text):
+    import unicodedata
+    t = unicodedata.normalize("NFD", text.lower())
+    return "".join(c for c in t if unicodedata.category(c) != "Mn")
+
+
+def _matrix(on):
+    try:
+        if HERE not in sys.path:
+            sys.path.insert(0, HERE)
+        from rpc_client import Bridge
+        Bridge().call("matrix_fill", on)
+        return True
+    except Exception:
+        return False
+
+
+def handle_command(text):
+    """Chat commands (PT/EN). Returns (reply, extra-json-fields)."""
+    t = _norm(text)
+    scenes = [
+        (("caminh", "anda", "walk"), "walking", "A caminhar no sonho."),
+        (("levanta", "stand", "de pe", "acorda"), "standing", "De pé no sonho."),
+        (("cai", "deita", "fall"), "fallen", "Caiu — a sonhar que caiu."),
+        (("vira", "flip", "capota"), "flipped", "Virado de costas no sonho."),
+    ]
+    for words, scene, reply in scenes:
+        if any(w in t for w in words):
+            return reply, {"scene": scene}
+    if "sonha" in t or "dorme" in t or "dream" in t:
+        subprocess.Popen([sys.executable, os.path.join(
+            HERE, "..", "dreamworld", "dream_replay.py")])
+        return "A sonhar outra vez — dados novos a caminho.", \
+            {"scene": None, "reload": True}
+    if "apaga" in t:
+        ok = _matrix(False)
+        return ("Luz apagada." if ok
+                else "Não consegui falar com o corpo agora."), {}
+    if "acende" in t or "luz" in t:
+        ok = _matrix(True)
+        return ("Luz acesa." if ok
+                else "Não consegui falar com o corpo agora."), {}
+    if "fala" in t or "diz" in t or "voz" in t:
+        subprocess.Popen([sys.executable,
+                          os.path.join(HERE, "qwen3", "voice.py")])
+        return "A pensar em voz alta… a frase aparece no cartão Dreaming.", {}
+    if "estado" in t or "como" in t or "status" in t:
+        s = read_json("state.json") or {}
+        idle = s.get("idle", {})
+        acc = round(100 * (s.get("probe_accuracy") or 0))
+        return (f"Já sonhei {idle.get('cycles', 0)} ciclos. "
+                f"Nas poses de prova acerto {acc}%."), {}
+    if "ajuda" in t or "help" in t:
+        return ("Comandos: caminhe · levanta · cai · vira · sonha · "
+                "acende · apaga · fala · estado"), {}
+    return ("Não conheço esse comando. Tenta: caminhe · levanta · cai · "
+            "vira · sonha · acende · apaga · fala · estado"), {}
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
@@ -285,7 +436,8 @@ class Handler(BaseHTTPRequestHandler):
             if voice:
                 state["voice"] = voice
             self._send(json.dumps(state), "application/json")
-        elif path in ("/latest.jpg", "/dream3d.jpg"):
+        elif path in ("/latest.jpg", "/dream_stand.jpg", "/dream_fallen.jpg",
+                      "/dream_flipped.jpg"):
             jpg = os.path.join(HERE, path.lstrip("/"))
             if os.path.exists(jpg):
                 with open(jpg, "rb") as f:
@@ -293,12 +445,24 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self.send_response(404)
                 self.end_headers()
-        elif path == "/dreams.json":
-            dreams = read_json("dream_samples.json") or []
-            imagined = [d for d in dreams if d.get("source") == "dream"]
-            memories = [d for d in dreams if d.get("source") != "dream"]
-            self._send(json.dumps({"dreams": (imagined + memories)[-160:],
-                                   "total": len(dreams)}), "application/json")
+        elif path == "/dream_replay.json":
+            fpath = os.path.join(HERE, "dream_replay.json")
+            if os.path.exists(fpath):
+                with open(fpath, "rb") as f:
+                    self._send(f.read(), "application/json")
+            else:
+                self.send_response(404)
+                self.end_headers()
+        elif path.startswith("/meshes/"):
+            fname = os.path.basename(path)
+            fpath = os.path.join(HERE, "..", "dreamworld", "model",
+                                 "meshes", fname)
+            if fname.endswith(".STL") and os.path.exists(fpath):
+                with open(fpath, "rb") as f:
+                    self._send(f.read(), "application/octet-stream")
+            else:
+                self.send_response(404)
+                self.end_headers()
         elif path == "/events":
             events = []
             log = os.path.join(HERE, "events.log")
@@ -309,6 +473,22 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self.send_response(404)
             self.end_headers()
+
+    def do_POST(self):
+        if self.path.split("?")[0] != "/command":
+            self.send_response(404)
+            self.end_headers()
+            return
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+            payload = json.loads(self.rfile.read(length) or b"{}")
+            reply, extra = handle_command(str(payload.get("text", "")))
+            body = {"reply": reply}
+            body.update(extra)
+            self._send(json.dumps(body), "application/json")
+        except Exception as e:
+            self._send(json.dumps({"reply": f"Erro: {e}"}),
+                       "application/json")
 
 
 if __name__ == "__main__":
