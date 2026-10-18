@@ -42,7 +42,9 @@ PAGE = """<!DOCTYPE html>
       radial-gradient(2.2px 2.2px at 93% 16%, rgba(255,255,255,.8), transparent 60%),
       radial-gradient(1.5px 1.5px at 47% 78%, rgba(210,220,255,.75), transparent 60%),
       radial-gradient(1.8px 1.8px at 15% 88%, rgba(255,241,190,.8), transparent 60%),
-      radial-gradient(1.5px 1.5px at 76% 84%, rgba(255,255,255,.75), transparent 60%); }
+      radial-gradient(1.5px 1.5px at 76% 84%, rgba(255,255,255,.75), transparent 60%);
+    animation: twinkle 6s ease-in-out infinite alternate; }
+  @keyframes twinkle { from { opacity:.55; } to { opacity:.95; } }
   body { background: radial-gradient(1200px 700px at 75% -10%, #1b2350 0%, transparent 60%),
          radial-gradient(1000px 600px at 10% 0%, #251b4d 0%, transparent 55%),
          linear-gradient(180deg, #05070f 0%, #0a0f22 55%, #0d1130 100%);
@@ -65,23 +67,41 @@ PAGE = """<!DOCTYPE html>
   .hero .veil { position:absolute; inset:0; background:linear-gradient(90deg, rgba(4,6,18,.85) 0%, rgba(4,6,18,.45) 48%, rgba(4,6,18,0) 78%); }
   .hero .txt { position:absolute; left:26px; bottom:20px; right:26px; }
   .hero h1 { font-size:37px; margin:0; font-weight:800; text-shadow: 0 2px 24px rgba(90,110,255,.45); }
-  .hero .tag { color:#cdd7ff; font-size:15.5px; margin-top:5px; text-shadow: 0 1px 10px rgba(0,0,0,.65); }
+  .hero .tag { color:#dbe4ff; font-size:15.5px; margin-top:9px; text-shadow: 0 1px 10px rgba(0,0,0,.65);
+               display:inline-block; background:rgba(5,8,20,.5); padding:6px 14px; border-radius:999px;
+               border:1px solid rgba(150,168,255,.28); backdrop-filter: blur(3px); }
   .pill { display:inline-block; padding:2px 11px; border-radius:999px; font-size:12.5px; vertical-align:middle;
           background:rgba(63,185,80,.16); border:1px solid rgba(63,185,80,.45); color:#7ee2a0; margin-left:6px; }
   .sub { color:#9aa7d4; margin:2px 2px 16px; font-size:13.5px; }
   .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:15px; position:relative; z-index:1; }
   .card { background: linear-gradient(180deg, rgba(27,35,66,.85), rgba(15,20,44,.9));
           border:1px solid rgba(150,168,255,.22); border-radius:22px; padding:18px 20px;
-          box-shadow: 0 12px 34px rgba(2,4,16,.5), inset 0 1px 0 rgba(255,255,255,.05); }
-  .card h2 { font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:#aebaff; margin:0 0 12px; }
+          box-shadow: 0 12px 34px rgba(2,4,16,.5), inset 0 1px 0 rgba(255,255,255,.05);
+          transition: transform .35s ease, box-shadow .35s ease; }
+  .card:hover { transform: translateY(-3px);
+          box-shadow: 0 20px 46px rgba(2,4,16,.62), 0 0 26px rgba(120,130,255,.13), inset 0 1px 0 rgba(255,255,255,.06); }
+  .card h2 { font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:#aebaff; margin:0 0 12px;
+             border-bottom:1px solid rgba(150,168,255,.14); padding-bottom:9px; }
   .probe { margin:10px 0; } .probe .lbl { display:flex; justify-content:space-between; font-size:14px; }
-  .bar { height:10px; background:rgba(255,255,255,.07); border-radius:5px; overflow:hidden; margin-top:4px; }
-  .fill { height:100%; border-radius:5px; transition: width .6s; }
+  .bar { height:12px; background:rgba(255,255,255,.07); border-radius:999px; overflow:hidden; margin-top:4px; }
+  .fill { height:100%; border-radius:999px; transition: width .6s; }
   .ok { background:linear-gradient(90deg,#2ea043,#3fb950); } .bad { background:linear-gradient(90deg,#d73a49,#f85149); } .see { background:linear-gradient(90deg,#4c8dff,#58a6ff); }
   .big { font-size:32px; font-weight:800; } .muted { color:#8f9cc9; font-size:13px; }
   .evt { font-size:13px; padding:6px 0; border-bottom:1px solid rgba(130,150,255,.1); }
   .evt b { color:#d2a8ff; font-weight:600; } .kept { color:#3fb950; } .disc { color:#d29922; }
   #live { color:#7ee2a0; } .row { display:flex; justify-content:space-between; margin:4px 0; font-size:14px; }
+  #voice { background:rgba(255,233,168,.07); border:1px solid rgba(255,222,150,.32); border-radius:16px;
+           padding:10px 14px; color:#ffedb5; }
+  #voice:empty { display:none; }
+  #chatInput:focus { outline:none; border-color:rgba(255,222,150,.65) !important;
+           box-shadow: 0 0 0 3px rgba(255,222,150,.15); }
+  .foot { display:flex; align-items:center; gap:10px; justify-content:center; margin-top:20px;
+          color:#8f9cc9; font-size:13px; position:relative; z-index:1; }
+  .foot img { width:34px; height:34px; border-radius:11px; border:1px solid rgba(255,222,150,.5);
+          box-shadow: 0 0 16px rgba(255,206,110,.3); }
+  .foot a { color:#aebaff; text-decoration:none; } .foot a:hover { text-decoration:underline; }
+  @media (prefers-reduced-motion: reduce) {
+    .pup, .zzz, .hero img, #dreamCanvas, body::after { animation: none !important; } }
   img.cam { width:100%; border-radius:16px; border:1px solid rgba(130,150,255,.22); background:#000; }
   #dreamCanvas { border:1px solid rgba(140,160,255,.4) !important; animation: dreamPulse 3.4s ease-in-out infinite; }
   @keyframes dreamPulse { 0%,100% { box-shadow: 0 0 20px rgba(96,120,255,.22); } 50% { box-shadow: 0 0 42px rgba(150,130,255,.42); } }
@@ -133,6 +153,7 @@ PAGE = """<!DOCTYPE html>
     </form></div>
   <div class="card"><h2>📜 Learning timeline</h2><div id="events"></div></div>
 </div>
+<div class="foot"><img src="/logo.png" alt=""><span>REM PhysicalAI · robots that dream themselves better · <a href="https://github.com/RemPhysicalAI">github.com/RemPhysicalAI</a></span></div>
 <script>
 async function tick() {
   try {
@@ -191,8 +212,8 @@ function chatAdd(who, text) {
   const d = document.createElement('div');
   d.innerHTML = '<b>' + who + ':</b> ' + text;
   d.style.cssText = who === 'you'
-    ? 'align-self:flex-end;background:rgba(76,110,255,.18);border:1px solid rgba(124,140,255,.5);padding:6px 9px;border-radius:10px;max-width:92%'
-    : 'align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(130,150,255,.25);padding:6px 9px;border-radius:10px;max-width:92%';
+    ? 'align-self:flex-end;background:rgba(76,110,255,.2);border:1px solid rgba(124,140,255,.5);padding:8px 13px;border-radius:18px 18px 6px 18px;max-width:92%'
+    : 'align-self:flex-start;background:rgba(255,255,255,.06);border:1px solid rgba(130,150,255,.25);padding:8px 13px;border-radius:18px 18px 18px 6px;max-width:92%';
   chatLog.appendChild(d); chatLog.scrollTop = chatLog.scrollHeight;
 }
 chatAdd('robot', 'Diz-me o que fazer: caminhe, levanta, cai, vira, sonha, acende, apaga, fala, estado.');
@@ -400,28 +421,30 @@ try {
 
 ABOUT_SLIDES = [
     ("slide1.jpg", "REM PhysicalAI",
-     "A system that lets any robot learn by itself. This is a PuppyPi. "
-     "It learns on its own, dreams about itself — and wakes up better."),
+     "A system that lets any robot learn by itself. It watches, it learns, "
+     "and while it sleeps it dreams — practicing in its own little world — "
+     "and wakes up better. This little pup is our first student."),
     ("slide2.jpg", "The problem",
      "Robots leave the factory and never learn again. The smart ones cost a "
      "fortune, and their brains live far away, in the cloud. The affordable "
-     "ones cannot learn at all."),
+     "ones cannot learn at all. So robots stay frozen — and never grow "
+     "with the people who own them."),
     ("slide3.jpg", "How it works",
-     "It sees a robot and knows which one it is. Awake, it moves and watches "
-     "itself move — and learns from what it sees. Asleep, it dreams: it "
-     "imagines itself in a little 3D world, practicing without tiring its "
-     "real body. When nobody needs it, it goes back to dreaming — now with "
-     "everything it learned while awake."),
+     "Three simple ideas. It watches itself: it moves, sees what happened, "
+     "and learns from it — like a puppy. People can teach it: show it once, "
+     "and it remembers. And it dreams: when nobody needs it, it imagines "
+     "itself in a small simulated world and practices, without tiring its "
+     "real body. It only keeps a change if it truly got better."),
     ("slide4.jpg", "It is already alive",
      "All of this is already running, live, inside one small robot — no "
-     "internet, no cloud. Tonight, while nobody was using it, it practiced "
-     "and improved by itself, again and again. A person showed it something "
-     "new, and it learned. And the PuppyPi in this story is real: the robot "
-     "in this photo is right here at this event."),
+     "internet, no cloud. Tonight, while nobody was using it, it dreamed "
+     "and improved by itself, again and again. A person taught it "
+     "something new, and it learned on the spot. And the PuppyPi in this "
+     "story is real: the robot in this photo is right here at this event."),
     ("slide5.jpg", "The vision",
-     "Any robot can have it: a one-dollar walker, this PuppyPi, any body at "
-     "all. One system, many bodies. The intelligence lives inside the robot — "
-     "where it should. Robots that dream themselves better."),
+     "Any robot can have it: a one-dollar walker, this PuppyPi, any body "
+     "at all. One system, many bodies. The intelligence lives inside the "
+     "robot — where it belongs. Robots that dream themselves better."),
 ]
 
 _ABOUT_CSS = """
@@ -440,6 +463,8 @@ _ABOUT_CSS = """
          animation: pupFloat 5.2s ease-in-out infinite; }
   @keyframes pupFloat { 0%,100% { transform: translateY(0) rotate(-1.6deg); } 50% { transform: translateY(-7px) rotate(1.6deg); } }
   h1 { font-size:clamp(26px, 4.5vw, 44px); margin:22px 0 10px; text-shadow: 0 2px 22px rgba(90,110,255,.4); }
+  h1::after { content:""; display:block; width:74px; height:4px; border-radius:99px; margin:14px auto 2px;
+              background: linear-gradient(90deg, #f5c56b, #ffe9a8); box-shadow: 0 0 16px rgba(245,197,107,.55); }
   p { font-size:clamp(15px, 2.2vw, 20px); line-height:1.55; color:#cdd7ff; max-width:760px; }
   .nav { position:fixed; bottom:18px; left:0; right:0; display:flex; gap:14px;
          justify-content:center; align-items:center; }
