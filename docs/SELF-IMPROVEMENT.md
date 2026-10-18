@@ -59,9 +59,9 @@ un-teach it**. Teaching by camera works the same way
 
 ## 4 · Prove it to yourself (2 minutes)
 
-- Chat **`estado`** in the interface → it reports its dream cycles
+- Chat **`status`** in the interface → it reports its dream cycles
   and probe accuracy from its real state.
-- Chat **`caminhe`** → it walks in the live simulation; **`acende`**
+- Chat **`walk`** → it walks in the live simulation; **`acende`**
   → its real LED matrix lights (the learning reaches the body).
 - `curl localhost:8080/state.json` → everything the interface knows:
   model size, dataset counts, per-probe confidence.

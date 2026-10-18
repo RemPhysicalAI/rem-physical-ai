@@ -104,6 +104,13 @@ PAGE = """<!DOCTYPE html>
     .pup, .zzz, .hero img, #dreamCanvas, body::after { animation: none !important; } }
   img.cam { width:100%; border-radius:16px; border:1px solid rgba(130,150,255,.22); background:#000; }
   #dreamCanvas { border:1px solid rgba(140,160,255,.4) !important; animation: dreamPulse 3.4s ease-in-out infinite; }
+  #dreamWrap { position:relative; }
+  #fsBtn { position:absolute; right:10px; bottom:10px; z-index:6; background:rgba(5,8,20,.68);
+           color:#ffe9a8; border:1px solid rgba(255,222,150,.55); border-radius:999px;
+           padding:7px 14px; font-size:13.5px; font-weight:600; cursor:pointer; backdrop-filter: blur(3px); }
+  #fsBtn:hover { background:rgba(24,30,64,.9); }
+  #dreamWrap:fullscreen { background:#05070f; display:flex; align-items:center; justify-content:center; }
+  #dreamWrap:fullscreen canvas, #dreamWrap:fullscreen img.cam { width:100% !important; max-height:100vh; object-fit:contain; }
   @keyframes dreamPulse { 0%,100% { box-shadow: 0 0 20px rgba(96,120,255,.22); } 50% { box-shadow: 0 0 42px rgba(150,130,255,.42); } }
   .zone { font-size:20px; font-weight:700; }
 </style></head><body>
@@ -124,8 +131,11 @@ PAGE = """<!DOCTYPE html>
     <div class="row" style="margin-top:8px"><span class="zone" id="zone">—</span><b id="zconf"></b></div>
     <div class="muted" id="zprobs"></div></div>
   <div class="card"><h2>🌙 The dream — simulation</h2>
-    <canvas id="dreamCanvas" style="width:100%;display:block;background:#0a0e14;border-radius:16px;border:1px solid #30363d"></canvas>
-    <img class="cam" id="dreamFallback" alt="dream" style="display:none">
+    <div id="dreamWrap">
+      <canvas id="dreamCanvas" style="width:100%;display:block;background:#0a0e14;border-radius:16px;border:1px solid #30363d"></canvas>
+      <img class="cam" id="dreamFallback" alt="dream" style="display:none">
+      <button id="fsBtn" type="button" title="Full screen">⛶ Full screen</button>
+    </div>
     <div class="row" style="margin-top:6px"><span id="dreamScene">the dream</span><b>simulation</b></div>
     <div class="muted">The robot dreams in a physics simulation and sends only the data —
     your screen rebuilds the dream locally. No video, no delay.</div></div>
@@ -147,7 +157,7 @@ PAGE = """<!DOCTYPE html>
   <div class="card"><h2>💬 Talk to the robot</h2>
     <div id="chatLog" style="height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
     <form id="chatForm" style="display:flex;gap:6px">
-      <input id="chatInput" autocomplete="off" placeholder="caminhe · levanta · cai · vira · acende · fala · estado"
+      <input id="chatInput" autocomplete="off" placeholder="walk · stand · fall · flip · dream · lights on · speak · status"
         style="flex:1;background:rgba(5,8,20,.7);border:1px solid rgba(130,150,255,.3);border-radius:999px;color:#e9edff;padding:10px 16px">
       <button type="submit" style="background:linear-gradient(135deg,#4c6fff,#8b5cf6);border:none;color:#fff;border-radius:999px;padding:10px 20px;cursor:pointer;font-weight:700;box-shadow:0 6px 18px rgba(110,90,255,.4)">Send 💬</button>
     </form></div>
@@ -216,7 +226,7 @@ function chatAdd(who, text) {
     : 'align-self:flex-start;background:rgba(255,255,255,.06);border:1px solid rgba(130,150,255,.25);padding:8px 13px;border-radius:18px 18px 18px 6px;max-width:92%';
   chatLog.appendChild(d); chatLog.scrollTop = chatLog.scrollHeight;
 }
-chatAdd('robot', 'Diz-me o que fazer: caminhe, levanta, cai, vira, sonha, acende, apaga, fala, estado.');
+chatAdd('robot', 'Tell me what to do: walk, stand, fall, flip, dream, lights on, lights off, speak, status.');
 document.getElementById('chatForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const inp = document.getElementById('chatInput');
@@ -229,7 +239,7 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
     chatAdd('robot', r.reply || '…');
     if (r.scene !== undefined) window.__dreamScene = r.scene;
     if (r.reload) window.__dreamReload = true;
-  } catch (err) { chatAdd('robot', 'Sem ligação ao robô agora.'); }
+  } catch (err) { chatAdd('robot', 'No connection to the robot right now.'); }
 });
 setTimeout(() => {
   if (!window.__dreamReady) {
@@ -294,6 +304,15 @@ try {
     renderer.setSize(w, Math.round(w * 0.72), false);
   }
   resize(); window.addEventListener('resize', resize);
+  const fsBtn = document.getElementById('fsBtn');
+  const dreamWrap = document.getElementById('dreamWrap');
+  if (fsBtn && dreamWrap) {
+    fsBtn.addEventListener('click', () => {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (dreamWrap.requestFullscreen) dreamWrap.requestFullscreen();
+    });
+    document.addEventListener('fullscreenchange', () => setTimeout(resize, 80));
+  }
   const caption = document.getElementById('dreamScene');
   function poseFromSim(xpos, xquat) {
     meta.bodies.forEach((name, i) => {
@@ -516,13 +535,14 @@ def _matrix(on):
 
 
 def handle_command(text):
-    """Chat commands (PT/EN). Returns (reply, extra-json-fields)."""
+    """Chat commands (keywords PT/EN; replies always in English)."""
     t = _norm(text)
     scenes = [
-        (("caminh", "anda", "walk"), "walking", "A caminhar no sonho."),
-        (("levanta", "stand", "de pe", "acorda"), "standing", "De pé no sonho."),
-        (("cai", "deita", "fall"), "fallen", "Caiu — a sonhar que caiu."),
-        (("vira", "flip", "capota"), "flipped", "Virado de costas no sonho."),
+        (("caminh", "anda", "walk"), "walking", "Walking in the dream."),
+        (("levanta", "stand", "de pe", "acorda", "get up"), "standing",
+         "Standing in the dream."),
+        (("cai", "deita", "fall"), "fallen", "Fallen — dreaming it fell."),
+        (("vira", "flip", "capota"), "flipped", "Flipped on its back in the dream."),
     ]
     for words, scene, reply in scenes:
         if any(w in t for w in words):
@@ -530,31 +550,31 @@ def handle_command(text):
     if "sonha" in t or "dorme" in t or "dream" in t:
         subprocess.Popen([sys.executable, os.path.join(
             HERE, "..", "dreamworld", "dream_replay.py")])
-        return "A sonhar outra vez — dados novos a caminho.", \
+        return "Dreaming again — fresh dream data on the way.", \
             {"scene": None, "reload": True}
-    if "apaga" in t:
+    if "apaga" in t or "lights off" in t or "turn off" in t:
         ok = _matrix(False)
-        return ("Luz apagada." if ok
-                else "Não consegui falar com o corpo agora."), {}
-    if "acende" in t or "luz" in t:
+        return ("Lights off." if ok
+                else "I can't reach the body right now."), {}
+    if "acende" in t or "luz" in t or "lights on" in t or "turn on" in t or "light" in t:
         ok = _matrix(True)
-        return ("Luz acesa." if ok
-                else "Não consegui falar com o corpo agora."), {}
-    if "fala" in t or "diz" in t or "voz" in t:
+        return ("Lights on." if ok
+                else "I can't reach the body right now."), {}
+    if "fala" in t or "diz" in t or "voz" in t or "speak" in t or "say" in t or "voice" in t:
         subprocess.Popen([sys.executable,
                           os.path.join(HERE, "qwen3", "voice.py")])
-        return "A pensar em voz alta… a frase aparece no cartão Dreaming.", {}
-    if "estado" in t or "como" in t or "status" in t:
+        return "Thinking out loud… my words appear in the Dreaming card.", {}
+    if "estado" in t or "status" in t or "how are you" in t:
         s = read_json("state.json") or {}
         idle = s.get("idle", {})
         acc = round(100 * (s.get("probe_accuracy") or 0))
-        return (f"Já sonhei {idle.get('cycles', 0)} ciclos. "
-                f"Nas poses de prova acerto {acc}%."), {}
+        return (f"I have dreamed {idle.get('cycles', 0)} cycles. "
+                f"On the probe poses I score {acc}%."), {}
     if "ajuda" in t or "help" in t:
-        return ("Comandos: caminhe · levanta · cai · vira · sonha · "
-                "acende · apaga · fala · estado"), {}
-    return ("Não conheço esse comando. Tenta: caminhe · levanta · cai · "
-            "vira · sonha · acende · apaga · fala · estado"), {}
+        return ("Commands: walk · stand · fall · flip · dream · "
+                "lights on · lights off · speak · status"), {}
+    return ("I don't know that one yet. Try: walk · stand · fall · "
+            "flip · dream · lights on · lights off · speak · status"), {}
 
 
 class Handler(BaseHTTPRequestHandler):
