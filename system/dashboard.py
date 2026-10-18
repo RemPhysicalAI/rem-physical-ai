@@ -65,6 +65,7 @@ dreams while it sleeps, and wakes up better. <span class="muted">Host robot: <b 
     <div class="row"><span>Mean confidence</span><b id="conf"></b></div></div>
   <div class="card"><h2>Dreaming (idle self-learning)</h2>
     <div class="big"><span id="cycles">0</span> <span class="muted" style="font-size:15px">dream cycles</span></div>
+    <div id="voice" style="font-size:17px; font-style:italic; margin:6px 0"></div>
     <div id="last"></div>
     <div class="muted" style="margin-top:8px">While idle, the robot dreams variations of what it knows,
     retrains itself, and keeps the new model only if the probes do not regress.</div>
@@ -105,6 +106,8 @@ async function tick() {
     document.getElementById('msize').textContent = m.size_bytes ? m.size_bytes + ' bytes' : '–';
     const idle = s.idle || {};
     document.getElementById('cycles').textContent = idle.cycles || 0;
+    if (s.voice && s.voice.said)
+      document.getElementById('voice').textContent = '🗣 “' + s.voice.said + '” — the robot, in its own words (Qwen3, local)';
     if (idle.last) { const L = idle.last;
       document.getElementById('last').innerHTML =
         `<div class="row"><span>Last dream</span><b class="${L.kept ? 'kept' : 'disc'}">${L.kept ? 'kept ✓' : 'discarded'}</b></div>
@@ -276,6 +279,9 @@ class Handler(BaseHTTPRequestHandler):
             selftest = read_json("selftest_state.json")
             if selftest:
                 state["selftest"] = selftest
+            voice = read_json("voice_state.json")
+            if voice:
+                state["voice"] = voice
             self._send(json.dumps(state), "application/json")
         elif path in ("/latest.jpg", "/dream3d.jpg"):
             jpg = os.path.join(HERE, path.lstrip("/"))
