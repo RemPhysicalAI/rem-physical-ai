@@ -10,6 +10,7 @@ operating contract (deploy steps, board facts, invariants).
 
 ## Docs
 
+- [Self-improvement, fast](docs/SELF-IMPROVEMENT.md): start the learning loop, teach it, prove it — five minutes
 - [How it works](docs/HOW-IT-WORKS.md): the concepts, in plain words
 - [Setup on the Ventuno Q](docs/SETUP.md): running in minutes
 - [Commands](docs/COMMANDS.md): chat commands, teaching, camera teaching

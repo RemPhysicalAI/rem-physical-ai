@@ -53,6 +53,8 @@ Full guide: [docs/SETUP.md](docs/SETUP.md)
 
 ## Documentation
 
+- [Self-improvement, fast](docs/SELF-IMPROVEMENT.md) — use the learning
+  loop in five minutes: start it, watch it dream, teach it, prove it
 - [How it works](docs/HOW-IT-WORKS.md) — the ideas, in plain words
 - [Setup on the Ventuno Q](docs/SETUP.md) — running in minutes
 - [Commands](docs/COMMANDS.md) — talk to the robot: chat, teaching, dreams
