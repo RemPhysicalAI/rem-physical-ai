@@ -173,26 +173,28 @@ tick(); setInterval(tick, 3000);
 
 ABOUT_SLIDES = [
     ("slide1.jpg", "DreamRobot",
-     "A self-improvement system for any robot. The example: a Hiwonder PuppyPi. "
-     "It learns by itself, dreams of itself in 3D — and wakes up better."),
+     "A system that lets any robot learn by itself. This is a PuppyPi. "
+     "It learns on its own, dreams about itself — and wakes up better."),
     ("slide2.jpg", "The problem",
-     "Robots leave the factory and never learn again. Brains cost fortunes — a humanoid "
-     "runs $150K in materials alone — and the intelligence lives in the cloud. "
-     "Affordable bodies that cannot learn serve no one."),
+     "Robots leave the factory and never learn again. The smart ones cost a "
+     "fortune, and their brains live far away, in the cloud. The affordable "
+     "ones cannot learn at all."),
     ("slide3.jpg", "How it works",
-     "The camera sees a PuppyPi → the system knows which robot it is. Awake, it drives "
-     "the 8 servos and understands, in real time, what is moving. Asleep, the dream is "
-     "itself simulated in 3D in MuJoCo — it trains inside the dream, without wearing out "
-     "the body. Unused again, it goes back to dreaming with everything it learned."),
-    ("slide4.jpg", "The proof — live today",
-     "MuJoCo 3D already runs inside the Ventuno Q — the dream needs no cloud. Dozens of "
-     "autonomous dream cycles; a 3,600-byte learned model; inference under 1 ms; a human "
-     "taught it a new pose and it retrained itself in 25 seconds. 100% offline. "
-     "And the PuppyPi in this story is right here at this event — the robot in this photo."),
+     "It sees a robot and knows which one it is. Awake, it moves and watches "
+     "itself move — and learns from what it sees. Asleep, it dreams: it "
+     "imagines itself in a little 3D world, practicing without tiring its "
+     "real body. When nobody needs it, it goes back to dreaming — now with "
+     "everything it learned while awake."),
+    ("slide4.jpg", "It is already alive",
+     "All of this is already running, live, inside one small robot — no "
+     "internet, no cloud. Tonight, while nobody was using it, it practiced "
+     "and improved by itself, again and again. A person showed it something "
+     "new, and it learned. And the PuppyPi in this story is real: the robot "
+     "in this photo is right here at this event."),
     ("slide5.jpg", "The vision",
-     "Any robot can run DreamRobot: the $1 walker, the PuppyPi, the Ventuno Q itself in "
-     "front of a mirror. One system, many bodies — the intelligence lives in the robot, "
-     "not in the cloud. Robots that dream themselves better."),
+     "Any robot can have it: a one-dollar walker, this PuppyPi, any body at "
+     "all. One system, many bodies. The intelligence lives inside the robot — "
+     "where it should. Robots that dream themselves better."),
 ]
 
 _ABOUT_CSS = """
