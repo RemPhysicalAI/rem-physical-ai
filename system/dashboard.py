@@ -184,12 +184,14 @@ PAGE = """<!DOCTYPE html>
     <div id="projects"><div class="muted">The camera is the front door: the system
     detects the robot in view, knows which robot it is — then it controls it if
     it can, or dreams about it and trains it virtually if it cannot.</div></div>
+    <div id="eyesCard">
     <h2 style="margin-top:16px">👀 Eyes — the camera</h2>
     <img class="cam" id="cam" alt="camera preview">
     <div class="row" style="margin-top:8px"><span class="zone" id="zone">—</span><b id="zconf"></b></div>
     <div class="muted" id="zprobs"></div>
     <div class="side-note">This camera is the robot's window on the world — and on itself.
     What it sees becomes what it learns.</div>
+    </div>
   </aside>
   <section class="panel stage"><h2>🌙 The dream — simulation</h2>
     <div id="dreamWrap">
@@ -236,6 +238,9 @@ async function tick() {
     const s = await (await fetch('/state.json')).json();
     document.getElementById('updated').textContent = 'updated ' + (s.updated || '');
     const v = s.vision || {};
+    const camFresh = v.at && (Date.now() - Date.parse(v.at) < 20000);
+    const eyes = document.getElementById('eyesCard');
+    if (eyes) eyes.style.display = camFresh ? '' : 'none';
     if (v.zone) {
       document.getElementById('cam').src = '/latest.jpg?t=' + Date.now();
       document.getElementById('zone').textContent = v.zone === 'watching' ? '👀 watching' : 'ODC is: ' + v.zone;
