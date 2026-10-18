@@ -171,17 +171,23 @@ setTimeout(() => {
 </script>
 <script type="importmap">
 {"imports": {"three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-             "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"}}
+             "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+             "@mujoco/mujoco": "https://cdn.jsdelivr.net/npm/@mujoco/mujoco@3.16.0/mujoco.js"}}
 </script>
 <script type="module">
 import * as THREE from 'three';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+import loadMujoco from '@mujoco/mujoco';
 const LABELS = {standing: 'dreaming: standing', walking: 'dreaming: walking',
   fallen: 'dreaming: fallen on its side', flipped: 'dreaming: flipped upside down'};
+const canvas = document.getElementById('dreamCanvas');
+function showFallback() {
+  const img = document.getElementById('dreamFallback');
+  img.style.display = 'block'; img.src = '/dream_stand.jpg';
+  canvas.style.display = 'none';
+}
 try {
-  let data = await (await fetch('/dream_replay.json')).json();
-  let frames = data.frames;
-  const canvas = document.getElementById('dreamCanvas');
+  const meta = await (await fetch('/dream_replay.json')).json();
   const renderer = new THREE.WebGLRenderer({canvas, antialias: true});
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0a0e14);
@@ -200,66 +206,146 @@ try {
   const grid = new THREE.PolarGridHelper(1.2, 12, 6, 48, 0x2b3a4d, 0x1c2735);
   grid.rotation.x = Math.PI / 2; grid.position.z = 0.001; scene.add(grid);
   const groups = {};
-  for (const name of data.bodies) {
+  for (const name of meta.bodies) {
     const g = new THREE.Group(); groups[name] = g; scene.add(g);
   }
   const loader = new STLLoader();
   const mat = new THREE.MeshStandardMaterial({color: 0x93a7cc,
     metalness: 0.35, roughness: 0.45});
-  await Promise.all(data.parts.map(async (p) => {
+  await Promise.all(meta.parts.map(async (p) => {
     const geo = await loader.loadAsync('/meshes/' + p.mesh + '.STL');
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.set(p.pos[0], p.pos[1], p.pos[2]);
     mesh.quaternion.set(p.quat[1], p.quat[2], p.quat[3], p.quat[0]);
     groups[p.body].add(mesh);
   }));
-  window.__dreamReady = true;
-  document.getElementById('dreamFallback').style.display = 'none';
-  canvas.style.display = 'block';
   function resize() {
     const w = canvas.clientWidth || 460;
     renderer.setSize(w, Math.round(w * 0.72), false);
   }
   resize(); window.addEventListener('resize', resize);
-  const clock = new THREE.Clock();
-  let fi = 0;
-  function range() {
-    const want = window.__dreamScene;
-    if (!want) return [0, frames.length - 1];
-    let a = -1, b = -1;
-    frames.forEach((f, i) => { if (f.scene === want) { if (a < 0) a = i; b = i; } });
-    return a < 0 ? [0, frames.length - 1] : [a, b];
-  }
-  const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
-  function applyPose(fa, fb, t) {
-    data.bodies.forEach((name, bi) => {
-      const A = fa.bodies[bi], B = fb.bodies[bi], g = groups[name];
-      g.position.set(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t,
-                     A[2] + (B[2] - A[2]) * t);
-      qa.set(A[4], A[5], A[6], A[3]); qb.set(B[4], B[5], B[6], B[3]);
-      qa.slerp(qb, t); g.quaternion.copy(qa);
+  const caption = document.getElementById('dreamScene');
+  function poseFromSim(xpos, xquat) {
+    meta.bodies.forEach((name, i) => {
+      const b = i + 1, g = groups[name];
+      g.position.set(xpos[b * 3], xpos[b * 3 + 1], xpos[b * 3 + 2]);
+      g.quaternion.set(xquat[b * 4 + 1], xquat[b * 4 + 2],
+                       xquat[b * 4 + 3], xquat[b * 4]);
     });
   }
-  renderer.setAnimationLoop(() => {
-    if (window.__dreamReload) {
-      window.__dreamReload = false;
-      fetch('/dream_replay.json').then(r => r.json())
-        .then(d => { data = d; frames = d.frames; fi = 0; });
+
+  // ---- First choice: LIVE MuJoCo simulation, right here in the page.
+  let sim = null;
+  try {
+    const mujoco = await loadMujoco();
+    const xml = await (await fetch('/model/twin.xml')).text();
+    const model = mujoco.MjModel.from_xml_string(xml);
+    sim = {mujoco, model, data: new mujoco.MjData(model),
+           scene: null, t: 0, auto: 0};
+  } catch (e) { sim = null; }
+
+  if (sim) {
+    const {mujoco, model} = sim;
+    const SCENES = {
+      standing: {pos: [0, 0, 0.11], roll: 0.03},
+      walking: {pos: [0, 0, 0.11], roll: 0.0, walk: true},
+      fallen: {pos: [0, 0, 0.07], roll: Math.PI / 2, loop: 1.15},
+      flipped: {pos: [0, 0, 0.07], roll: Math.PI, loop: 2.2},
+    };
+    const ORDER = ['standing', 'walking', 'fallen', 'flipped'];
+    function setScene(name) {
+      const cfg = SCENES[name]; if (!cfg) return;
+      try { mujoco.mj_resetData(model, sim.data); }
+      catch (e) {
+        try { sim.data.delete(); } catch (_) {}
+        sim.data = new mujoco.MjData(model);
+      }
+      const q = sim.data.qpos;
+      q[0] = cfg.pos[0]; q[1] = cfg.pos[1]; q[2] = cfg.pos[2];
+      q[3] = Math.cos(cfg.roll / 2); q[4] = Math.sin(cfg.roll / 2);
+      q[5] = 0; q[6] = 0;
+      if (cfg.walk) sim.data.qvel[0] = 0.9;
+      sim.scene = name; sim.t = 0;
+      caption.textContent = LABELS[name] + ' · live simulation';
     }
-    const [a, b] = range();
-    fi += clock.getDelta() * data.fps;
-    if (fi < a || fi > b) fi = a;
-    const i0 = Math.min(Math.floor(fi), b), i1 = Math.min(i0 + 1, b);
-    applyPose(frames[i0], frames[i1], Math.min(fi - Math.floor(fi), 1));
-    document.getElementById('dreamScene').textContent =
-      LABELS[frames[i0].scene] || 'the dream';
-    renderer.render(scene, camera);
-  });
-} catch (e) {
-  const img = document.getElementById('dreamFallback');
-  img.style.display = 'block'; img.src = '/dream_stand.jpg';
-  document.getElementById('dreamCanvas').style.display = 'none';
-}
+    setScene('standing');
+    window.__dreamReady = true;
+    document.getElementById('dreamFallback').style.display = 'none';
+    canvas.style.display = 'block';
+    const clock = new THREE.Clock();
+    renderer.setAnimationLoop(() => {
+      const want = window.__dreamScene;
+      if (window.__dreamReload) {
+        window.__dreamReload = false;
+        sim.auto = 0; setScene(want || 'standing');
+      } else if (want && want !== sim.scene) setScene(want);
+      else if (!want) {
+        sim.auto += clock.getDelta();
+        if (sim.auto > 8) {
+          sim.auto = 0;
+          setScene(ORDER[(ORDER.indexOf(sim.scene) + 1) % ORDER.length]);
+        }
+      }
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const steps = Math.max(1, Math.round(dt / model.opt.timestep));
+      const cfg = SCENES[sim.scene];
+      for (let s = 0; s < steps; s++) {
+        if (cfg && cfg.walk) {
+          try {
+            const t = sim.data.time;
+            const fx = sim.data.xfrc_applied;
+            fx[6 + 3] = 1.0 * Math.sin(2 * Math.PI * 2.0 * t + Math.PI / 2);
+            fx[6 + 4] = 1.2 * Math.sin(2 * Math.PI * 2.0 * t);
+          } catch (e) {}
+          if (sim.data.qvel[0] < 0.25) sim.data.qvel[0] = 0.8;
+          if (Math.abs(sim.data.qpos[0]) > 0.5) sim.data.qpos[0] = 0;
+        }
+        mujoco.mj_step(model, sim.data);
+        sim.t += model.opt.timestep;
+      }
+      if (cfg && cfg.loop && sim.t > cfg.loop) setScene(sim.scene);
+      poseFromSim(sim.data.xpos, sim.data.xquat);
+      renderer.render(scene, camera);
+    });
+  } else {
+    // ---- Fallback: replay the dream data the robot recorded.
+    let frames = meta.frames, fi = 0;
+    window.__dreamReady = true;
+    document.getElementById('dreamFallback').style.display = 'none';
+    canvas.style.display = 'block';
+    const clock = new THREE.Clock();
+    const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
+    function range() {
+      const want = window.__dreamScene;
+      if (!want) return [0, frames.length - 1];
+      let a = -1, b = -1;
+      frames.forEach((f, i) => { if (f.scene === want) { if (a < 0) a = i; b = i; } });
+      return a < 0 ? [0, frames.length - 1] : [a, b];
+    }
+    renderer.setAnimationLoop(() => {
+      if (window.__dreamReload) {
+        window.__dreamReload = false;
+        fetch('/dream_replay.json').then(r => r.json())
+          .then(d => { frames = d.frames; fi = 0; });
+      }
+      const [a, b] = range();
+      fi += clock.getDelta() * meta.fps;
+      if (fi < a || fi > b) fi = a;
+      const i0 = Math.min(Math.floor(fi), b), i1 = Math.min(i0 + 1, b);
+      const t = Math.min(fi - Math.floor(fi), 1);
+      const fa = frames[i0], fb = frames[i1];
+      meta.bodies.forEach((name, bi) => {
+        const A = fa.bodies[bi], B = fb.bodies[bi], g = groups[name];
+        g.position.set(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t,
+                       A[2] + (B[2] - A[2]) * t);
+        qa.set(A[4], A[5], A[6], A[3]); qb.set(B[4], B[5], B[6], B[3]);
+        qa.slerp(qb, t); g.quaternion.copy(qa);
+      });
+      caption.textContent = (LABELS[frames[i0].scene] || 'the dream') + ' · recorded dream data';
+      renderer.render(scene, camera);
+    });
+  }
+} catch (e) { showFallback(); }
 </script></body></html>"""
 
 
@@ -442,6 +528,15 @@ class Handler(BaseHTTPRequestHandler):
             if os.path.exists(jpg):
                 with open(jpg, "rb") as f:
                     self._send(f.read(), "image/jpeg")
+            else:
+                self.send_response(404)
+                self.end_headers()
+        elif path == "/model/twin.xml":
+            fpath = os.path.join(HERE, "..", "dreamworld", "model",
+                                 "puppy_twin.xml")
+            if os.path.exists(fpath):
+                with open(fpath, "rb") as f:
+                    self._send(f.read(), "text/xml")
             else:
                 self.send_response(404)
                 self.end_headers()
