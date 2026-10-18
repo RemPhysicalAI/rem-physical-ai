@@ -163,6 +163,69 @@ tick(); setInterval(tick, 3000);
 </script></body></html>"""
 
 
+ABOUT_SLIDES = [
+    ("slide1.jpg", "DreamRobot",
+     "A self-improvement system for any robot. The example: a Hiwonder PuppyPi. "
+     "It learns by itself, dreams of itself in 3D — and wakes up better."),
+    ("slide2.jpg", "The problem",
+     "Robots leave the factory and never learn again. Brains cost fortunes — a humanoid "
+     "runs $150K in materials alone — and the intelligence lives in the cloud. "
+     "Affordable bodies that cannot learn serve no one."),
+    ("slide3.jpg", "How it works",
+     "The camera sees a PuppyPi → the system knows which robot it is. Awake, it drives "
+     "the 8 servos and understands, in real time, what is moving. Asleep, the dream is "
+     "itself simulated in 3D in MuJoCo — it trains inside the dream, without wearing out "
+     "the body. Unused again, it goes back to dreaming with everything it learned."),
+    ("slide4.jpg", "The proof — live today",
+     "MuJoCo 3D already runs inside the Ventuno Q — the dream needs no cloud. Dozens of "
+     "autonomous dream cycles; a 3,600-byte learned model; inference under 1 ms; a human "
+     "taught it a new pose and it retrained itself in 25 seconds. 100% offline. "
+     "And the PuppyPi in this story is right here at this event — the robot in this photo."),
+    ("slide5.jpg", "The vision",
+     "Any robot can run DreamRobot: the $1 walker, the PuppyPi, the Ventuno Q itself in "
+     "front of a mirror. One system, many bodies — the intelligence lives in the robot, "
+     "not in the cloud. Robots that dream themselves better."),
+]
+
+_ABOUT_CSS = """
+  body { background:#0d1117; color:#e6edf3; font-family: system-ui, sans-serif; margin:0; }
+  .slide { display:none; min-height:100vh; box-sizing:border-box; padding:28px 5vw 70px;
+           flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .slide.on { display:flex; }
+  .slide img { max-width:min(880px, 92vw); max-height:52vh; border-radius:14px;
+               border:1px solid #30363d; object-fit:cover; }
+  h1 { font-size:clamp(26px, 4.5vw, 44px); margin:22px 0 10px; }
+  p { font-size:clamp(15px, 2.2vw, 20px); line-height:1.55; color:#c9d1d9; max-width:760px; }
+  .nav { position:fixed; bottom:18px; left:0; right:0; display:flex; gap:14px;
+         justify-content:center; align-items:center; }
+  .nav button { background:#21262d; color:#e6edf3; border:1px solid #30363d; border-radius:8px;
+                padding:9px 18px; font-size:15px; cursor:pointer; }
+  .nav span { color:#8b949e; font-size:14px; }
+  a { color:#58a6ff; }
+"""
+
+ABOUT_PAGE = ("<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'>"
+              "<meta name='viewport' content='width=device-width, initial-scale=1'>"
+              "<title>DreamRobot — about</title><style>" + _ABOUT_CSS + "</style></head><body>"
+              + "".join(
+                  f"<section class='slide'><img src='/about/{img}' alt=''>"
+                  f"<h1>{title}</h1><p>{text}</p></section>"
+                  for img, title, text in ABOUT_SLIDES)
+              + """<div class='nav'><button onclick='go(-1)'>← Prev</button>
+<span id='counter'></span><button onclick='go(1)'>Next →</button></div>
+<script>
+let cur = 0; const slides = document.querySelectorAll('.slide');
+function show(n) { cur = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, i) => s.classList.toggle('on', i === cur));
+  document.getElementById('counter').textContent = (cur + 1) + ' / ' + slides.length; }
+function go(d) { show(cur + d); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') go(1);
+  if (e.key === 'ArrowLeft') go(-1); });
+show(0);
+</script></body></html>""")
+
+
 def read_json(name):
     path = os.path.join(HERE, name)
     if os.path.exists(path):
@@ -186,7 +249,19 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = self.path.split("?")[0]
-        if path == "/":
+        if path == "/about":
+            self._send(ABOUT_PAGE, "text/html; charset=utf-8")
+        elif path.startswith("/about/"):
+            fname = os.path.basename(path)
+            fpath = os.path.join(HERE, "about", fname)
+            if fname and os.path.exists(fpath):
+                mime = "image/png" if fname.endswith(".png") else "image/jpeg"
+                with open(fpath, "rb") as f:
+                    self._send(f.read(), mime)
+            else:
+                self.send_response(404)
+                self.end_headers()
+        elif path == "/":
             self._send(PAGE, "text/html; charset=utf-8")
         elif path == "/state.json":
             state = read_json("state.json") or {}
