@@ -1,6 +1,6 @@
-# DreamRobot projects
+# REM PhysicalAI projects
 
-Every robot that runs DreamRobot is saved here as a **self-improvement
+Every robot that runs REM PhysicalAI is saved here as a **self-improvement
 project**: one folder per robot, with a `project.json` describing the
 host (body, brain, and its act/see/think plugs) and what it has learned
 so far. The engine in `../system/` is shared by all of them; a project

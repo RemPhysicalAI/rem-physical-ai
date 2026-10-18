@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-DreamRobot voice — the robot speaks from its own state.
+REM PhysicalAI voice — the robot speaks from its own state.
 
 Reads the robot's live state (dream cycles, memory, probe scores, what
 the camera currently sees), grounds a short prompt in those facts, and

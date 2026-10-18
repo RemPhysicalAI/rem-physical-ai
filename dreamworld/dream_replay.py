@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-DreamRobot — record the dream as DATA, not video.
+REM PhysicalAI — record the dream as DATA, not video.
 
 Rolls the twin through a dream montage (standing -> walking -> fallen
 -> flipped) in the physics simulation and records, 20 times a second,

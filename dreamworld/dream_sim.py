@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-DreamRobot — the dream itself: MuJoCo physics dreams of the PuppyPi.
+REM PhysicalAI — the dream itself: MuJoCo physics dreams of the PuppyPi.
 
 Each dream is a physics rollout of the robot's digital twin: place the
 twin in a situation (upright, tipped, pushed over, flipped), let physics

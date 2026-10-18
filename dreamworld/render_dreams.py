@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-DreamRobot — render the dream.
+REM PhysicalAI — render the dream.
 
 Renders the three MuJoCo dream scenes (standing, fallen, flipped) with
 the robot's own renderer, into the interface folder. Run on the board:

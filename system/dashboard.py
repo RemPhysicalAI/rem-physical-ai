@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-DreamRobot — interface.
+REM PhysicalAI — interface.
 
-DreamRobot is an independent self-learning system that installs on any
+REM PhysicalAI is an independent self-learning system that installs on any
 robot: give it a way to act, a camera to see, and a computer to think,
 and it learns by itself — teaching itself while awake, dreaming while
 idle, and testing itself in the mirror. This page is its window: what
@@ -27,7 +27,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PAGE = """<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DreamRobot — self-learning system</title>
+<title>REM PhysicalAI — self-learning system</title>
 <style>
   * { box-sizing: border-box; }
   body { background: radial-gradient(1200px 700px at 75% -10%, #1b2350 0%, transparent 60%),
@@ -69,7 +69,7 @@ PAGE = """<!DOCTYPE html>
   <img src="/banner.jpg" alt="A robot dreaming under the moon">
   <div class="veil"></div>
   <div class="txt">
-    <h1>🌙 DreamRobot <span class="pill" id="live">● live</span></h1>
+    <h1>🌙 REM PhysicalAI <span class="pill" id="live">● live</span></h1>
     <div class="tag">It learns by itself. It dreams while it sleeps — and wakes up better.</div>
   </div>
 </div>
@@ -375,7 +375,7 @@ try {
 
 
 ABOUT_SLIDES = [
-    ("slide1.jpg", "DreamRobot",
+    ("slide1.jpg", "REM PhysicalAI",
      "A system that lets any robot learn by itself. This is a PuppyPi. "
      "It learns on its own, dreams about itself — and wakes up better."),
     ("slide2.jpg", "The problem",
@@ -424,7 +424,7 @@ _ABOUT_CSS = """
 
 ABOUT_PAGE = ("<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'>"
               "<meta name='viewport' content='width=device-width, initial-scale=1'>"
-              "<title>DreamRobot — about</title><style>" + _ABOUT_CSS + "</style></head><body>"
+              "<title>REM PhysicalAI — about</title><style>" + _ABOUT_CSS + "</style></head><body>"
               + "".join(
                   f"<section class='slide'><img src='/about/{img}' alt=''>"
                   f"<h1>{title}</h1><p>{text}</p></section>"
