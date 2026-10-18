@@ -53,6 +53,9 @@ dreams while it sleeps, and wakes up better. <span class="muted">Host robot: <b 
     <div class="row" style="margin-top:8px"><span class="zone" id="zone">—</span><b id="zconf"></b></div>
     <div class="muted" id="zprobs"></div></div>
   <div class="card"><h2>Dream simulator — what it's dreaming</h2>
+    <img class="cam" id="dream3d" alt="MuJoCo dream world">
+    <div class="muted" style="margin:4px 0 10px">The dream world: the PuppyPi twin in MuJoCo 3D,
+    rendered by the robot itself. Below, the poses it is rehearsing.</div>
     <canvas id="dreamCanvas" width="460" height="240" style="width:100%;background:#0a0e14;border-radius:8px;border:1px solid #30363d"></canvas>
     <div class="row" style="margin-top:6px"><span id="dreamCaption">loading dreams…</span><b id="dreamCount"></b></div>
     <div class="muted">Each frame is one imagined pose from the robot's current dream batch —
@@ -78,6 +81,8 @@ async function tick() {
   try {
     const s = await (await fetch('/state.json')).json();
     document.getElementById('updated').textContent = 'updated ' + (s.updated || '');
+    const dimg = document.getElementById('dream3d');
+    if (dimg) dimg.src = '/dream3d.jpg?t=' + Date.now();
     const v = s.vision || {};
     if (v.zone) {
       document.getElementById('cam').src = '/latest.jpg?t=' + Date.now();
@@ -272,8 +277,8 @@ class Handler(BaseHTTPRequestHandler):
             if selftest:
                 state["selftest"] = selftest
             self._send(json.dumps(state), "application/json")
-        elif path == "/latest.jpg":
-            jpg = os.path.join(HERE, "latest.jpg")
+        elif path in ("/latest.jpg", "/dream3d.jpg"):
+            jpg = os.path.join(HERE, path.lstrip("/"))
             if os.path.exists(jpg):
                 with open(jpg, "rb") as f:
                     self._send(f.read(), "image/jpeg")
