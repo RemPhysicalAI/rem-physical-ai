@@ -31,6 +31,12 @@ PAGE = """<!DOCTYPE html>
 <link rel="icon" href="/logo.png">
 <style>
   * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { background: radial-gradient(1200px 700px at 75% -10%, #1b2350 0%, transparent 60%),
+         radial-gradient(1000px 600px at 10% 0%, #251b4d 0%, transparent 55%),
+         linear-gradient(180deg, #05070f 0%, #0a0f22 55%, #0d1130 100%);
+         background-attachment: fixed; color:#e9edff; font-family: system-ui, sans-serif;
+         margin:0; padding:14px; display:flex; flex-direction:column; gap:12px; min-height:100vh; }
   body::after { content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
     background-image:
       radial-gradient(2px 2px at 8% 18%, rgba(255,241,190,.95), transparent 60%),
@@ -45,43 +51,33 @@ PAGE = """<!DOCTYPE html>
       radial-gradient(1.5px 1.5px at 76% 84%, rgba(255,255,255,.75), transparent 60%);
     animation: twinkle 6s ease-in-out infinite alternate; }
   @keyframes twinkle { from { opacity:.55; } to { opacity:.95; } }
-  body { background: radial-gradient(1200px 700px at 75% -10%, #1b2350 0%, transparent 60%),
-         radial-gradient(1000px 600px at 10% 0%, #251b4d 0%, transparent 55%),
-         linear-gradient(180deg, #05070f 0%, #0a0f22 55%, #0d1130 100%);
-         background-attachment: fixed; color:#e9edff; font-family: system-ui, sans-serif;
-         margin:0; padding:22px; min-height:100vh; }
-  .hero { position:relative; border-radius:26px; overflow:hidden; margin-bottom:14px; z-index:1;
-          border:1px solid rgba(140,160,255,.25); box-shadow: 0 18px 50px rgba(2,4,18,.65); }
-  .pup { position:absolute; right:24px; bottom:16px; width:126px; height:126px; object-fit:cover;
-         border-radius:36px; border:2px solid rgba(255,222,150,.6); z-index:3;
-         box-shadow: 0 0 38px rgba(255,206,110,.38), 0 16px 34px rgba(2,4,18,.55);
-         animation: pupFloat 5.2s ease-in-out infinite; }
-  @keyframes pupFloat { 0%,100% { transform: translateY(0) rotate(-1.6deg); } 50% { transform: translateY(-10px) rotate(1.6deg); } }
-  .zzz { position:absolute; right:140px; bottom:126px; z-index:4; font-weight:800; color:#ffe9a8;
-         text-shadow: 0 0 16px rgba(255,215,120,.85); animation: zFloat 3.8s ease-in-out infinite; }
-  @keyframes zFloat { 0%,100% { transform: translateY(0); opacity:.85; } 50% { transform: translateY(-12px); opacity:1; } }
-  @media (max-width: 640px) { .pup { width:88px; height:88px; border-radius:26px; } .zzz { right:104px; bottom:96px; } }
-  .hero img { width:100%; height:230px; object-fit:cover; object-position:center 63%; display:block;
-              animation: heroFloat 26s ease-in-out infinite alternate; }
-  @keyframes heroFloat { from { transform: scale(1) translateY(0); } to { transform: scale(1.07) translateY(-6px); } }
-  .hero .veil { position:absolute; inset:0; background:linear-gradient(90deg, rgba(4,6,18,.85) 0%, rgba(4,6,18,.45) 48%, rgba(4,6,18,0) 78%); }
-  .hero .txt { position:absolute; left:26px; bottom:20px; right:26px; }
-  .hero h1 { font-size:37px; margin:0; font-weight:800; text-shadow: 0 2px 24px rgba(90,110,255,.45); }
-  .hero .tag { color:#dbe4ff; font-size:15.5px; margin-top:9px; text-shadow: 0 1px 10px rgba(0,0,0,.65);
-               display:inline-block; background:rgba(5,8,20,.5); padding:6px 14px; border-radius:999px;
-               border:1px solid rgba(150,168,255,.28); backdrop-filter: blur(3px); }
+  .topbar { position:relative; z-index:1; display:flex; align-items:center; gap:15px;
+            background: linear-gradient(180deg, rgba(27,35,66,.85), rgba(15,20,44,.9));
+            border:1px solid rgba(150,168,255,.22); border-radius:20px; padding:10px 18px 10px 12px;
+            box-shadow: 0 12px 34px rgba(2,4,16,.5), inset 0 1px 0 rgba(255,255,255,.05); }
+  .brand-pup { width:58px; height:58px; border-radius:17px; object-fit:cover;
+               border:2px solid rgba(255,222,150,.55);
+               box-shadow: 0 0 24px rgba(255,206,110,.35);
+               animation: pupFloat 5.2s ease-in-out infinite; }
+  @keyframes pupFloat { 0%,100% { transform: translateY(0) rotate(-1.6deg); } 50% { transform: translateY(-5px) rotate(1.6deg); } }
+  .brand-name { font-size:24px; font-weight:800; letter-spacing:.01em; }
+  .brand-tag { color:#9fb0e8; font-size:13px; margin-top:1px; }
   .pill { display:inline-block; padding:2px 11px; border-radius:999px; font-size:12.5px; vertical-align:middle;
-          background:rgba(63,185,80,.16); border:1px solid rgba(63,185,80,.45); color:#7ee2a0; margin-left:6px; }
-  .sub { color:#9aa7d4; margin:2px 2px 16px; font-size:13.5px; }
-  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:15px; position:relative; z-index:1; }
-  .card { background: linear-gradient(180deg, rgba(27,35,66,.85), rgba(15,20,44,.9));
-          border:1px solid rgba(150,168,255,.22); border-radius:22px; padding:18px 20px;
-          box-shadow: 0 12px 34px rgba(2,4,16,.5), inset 0 1px 0 rgba(255,255,255,.05);
-          transition: transform .35s ease, box-shadow .35s ease; }
-  .card:hover { transform: translateY(-3px);
-          box-shadow: 0 20px 46px rgba(2,4,16,.62), 0 0 26px rgba(120,130,255,.13), inset 0 1px 0 rgba(255,255,255,.06); }
-  .card h2 { font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:#aebaff; margin:0 0 12px;
-             border-bottom:1px solid rgba(150,168,255,.14); padding-bottom:9px; }
+          background:rgba(63,185,80,.16); border:1px solid rgba(63,185,80,.45); color:#7ee2a0; margin-left:8px; }
+  .top-meta { margin-left:auto; text-align:right; color:#8f9cc9; font-size:12.5px; line-height:1.5; }
+  .top-meta b { color:#cdd7ff; }
+  .zzz { font-weight:800; color:#ffe9a8; text-shadow: 0 0 16px rgba(255,215,120,.85);
+         animation: zFloat 3.8s ease-in-out infinite; white-space:nowrap; }
+  @keyframes zFloat { 0%,100% { transform: translateY(0); opacity:.85; } 50% { transform: translateY(-7px); opacity:1; } }
+  .main { position:relative; z-index:1; flex:1; min-height:0;
+          display:grid; grid-template-columns: 302px minmax(0,1fr) 352px; gap:12px; }
+  .panel { background: linear-gradient(180deg, rgba(27,35,66,.85), rgba(15,20,44,.9));
+           border:1px solid rgba(150,168,255,.22); border-radius:20px; padding:15px 17px;
+           box-shadow: 0 12px 34px rgba(2,4,16,.5), inset 0 1px 0 rgba(255,255,255,.05); }
+  .panel h2 { font-size:12.5px; text-transform:uppercase; letter-spacing:.09em; color:#aebaff;
+              margin:0 0 11px; border-bottom:1px solid rgba(150,168,255,.14); padding-bottom:8px; }
+  .side { overflow-y:auto; min-height:0; }
+  .stage { display:flex; flex-direction:column; min-height:0; overflow:hidden; }
   .probe { margin:10px 0; } .probe .lbl { display:flex; justify-content:space-between; font-size:14px; }
   .bar { height:12px; background:rgba(255,255,255,.07); border-radius:999px; overflow:hidden; margin-top:4px; }
   .fill { height:100%; border-radius:999px; transition: width .6s; }
@@ -90,47 +86,67 @@ PAGE = """<!DOCTYPE html>
   .evt { font-size:13px; padding:6px 0; border-bottom:1px solid rgba(130,150,255,.1); }
   .evt b { color:#d2a8ff; font-weight:600; } .kept { color:#3fb950; } .disc { color:#d29922; }
   #live { color:#7ee2a0; } .row { display:flex; justify-content:space-between; margin:4px 0; font-size:14px; }
-  #voice { background:rgba(255,233,168,.07); border:1px solid rgba(255,222,150,.32); border-radius:16px;
-           padding:10px 14px; color:#ffedb5; }
-  #voice:empty { display:none; }
-  #chatInput:focus { outline:none; border-color:rgba(255,222,150,.65) !important;
-           box-shadow: 0 0 0 3px rgba(255,222,150,.15); }
-  .foot { display:flex; align-items:center; gap:10px; justify-content:center; margin-top:20px;
-          color:#8f9cc9; font-size:13px; position:relative; z-index:1; }
-  .foot img { width:34px; height:34px; border-radius:11px; border:1px solid rgba(255,222,150,.5);
-          box-shadow: 0 0 16px rgba(255,206,110,.3); }
-  .foot a { color:#aebaff; text-decoration:none; } .foot a:hover { text-decoration:underline; }
-  @media (prefers-reduced-motion: reduce) {
-    .pup, .zzz, .hero img, #dreamCanvas, body::after { animation: none !important; } }
   img.cam { width:100%; border-radius:16px; border:1px solid rgba(130,150,255,.22); background:#000; }
+  .side-note { margin-top:12px; color:#8f9cc9; font-size:13px; line-height:1.5;
+               background:rgba(255,233,168,.05); border:1px solid rgba(255,222,150,.18);
+               border-radius:14px; padding:10px 12px; }
   #dreamCanvas { border:1px solid rgba(140,160,255,.4) !important; animation: dreamPulse 3.4s ease-in-out infinite; }
-  #dreamWrap { position:relative; }
+  @keyframes dreamPulse { 0%,100% { box-shadow: 0 0 20px rgba(96,120,255,.22); } 50% { box-shadow: 0 0 42px rgba(150,130,255,.42); } }
+  #dreamWrap { position:relative; flex:1; min-height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  #dreamWrap canvas { max-height:100%; }
   #fsBtn { position:absolute; right:10px; bottom:10px; z-index:6; background:rgba(5,8,20,.68);
            color:#ffe9a8; border:1px solid rgba(255,222,150,.55); border-radius:999px;
            padding:7px 14px; font-size:13.5px; font-weight:600; cursor:pointer; backdrop-filter: blur(3px); }
   #fsBtn:hover { background:rgba(24,30,64,.9); }
   #dreamWrap:fullscreen { background:#05070f; display:flex; align-items:center; justify-content:center; }
   #dreamWrap:fullscreen canvas, #dreamWrap:fullscreen img.cam { width:100% !important; max-height:100vh; object-fit:contain; }
-  @keyframes dreamPulse { 0%,100% { box-shadow: 0 0 20px rgba(96,120,255,.22); } 50% { box-shadow: 0 0 42px rgba(150,130,255,.42); } }
   .zone { font-size:20px; font-weight:700; }
+  #voice { background:rgba(255,233,168,.07); border:1px solid rgba(255,222,150,.32); border-radius:16px;
+           padding:10px 14px; color:#ffedb5; }
+  #voice:empty { display:none; }
+  .chatbox { margin-top:10px; border-top:1px solid rgba(150,168,255,.14); padding-top:10px; }
+  #chatLog { height:104px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
+  #chatInput:focus { outline:none; border-color:rgba(255,222,150,.65) !important;
+           box-shadow: 0 0 0 3px rgba(255,222,150,.15); }
+  .ticker { position:relative; z-index:1; display:flex; align-items:flex-start; gap:16px; padding:11px 17px; }
+  .ticker-title { font-size:12.5px; text-transform:uppercase; letter-spacing:.09em; color:#aebaff;
+                  white-space:nowrap; padding-top:5px; }
+  #events { display:flex; gap:20px; overflow-x:auto; overflow-y:hidden; flex:1; padding-bottom:2px; }
+  #events .evt { white-space:nowrap; border-bottom:none; padding:4px 0; }
+  .foot { display:flex; align-items:center; gap:10px; justify-content:center;
+          color:#8f9cc9; font-size:13px; position:relative; z-index:1; }
+  .foot img { width:30px; height:30px; border-radius:10px; border:1px solid rgba(255,222,150,.5);
+          box-shadow: 0 0 16px rgba(255,206,110,.3); }
+  .foot a { color:#aebaff; text-decoration:none; } .foot a:hover { text-decoration:underline; }
+  @media (max-width: 1080px) {
+    body { height:auto; }
+    .main { grid-template-columns: 1fr; }
+    .side { overflow:visible; }
+    #dreamWrap { min-height:300px; }
+    .top-meta { display:none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .brand-pup, .zzz, #dreamCanvas, body::after { animation: none !important; } }
 </style></head><body>
-<div class="hero">
-  <img src="/banner.jpg" alt="A robot dreaming under the moon">
-  <div class="veil"></div>
-  <img class="pup" src="/logo.png" alt="REM PhysicalAI — the sleeping robot pup">
-  <div class="zzz"><span style="font-size:14px">z</span> <span style="font-size:20px">z</span> <span style="font-size:27px">Z</span></div>
-  <div class="txt">
-    <h1>🌙 REM PhysicalAI <span class="pill" id="live">● live</span></h1>
-    <div class="tag">It learns by itself. It dreams while it sleeps — and wakes up better.</div>
+<div class="topbar">
+  <img class="brand-pup" src="/logo.png" alt="REM PhysicalAI — the sleeping robot pup">
+  <div>
+    <div class="brand-name">REM PhysicalAI <span class="pill" id="live">● live</span></div>
+    <div class="brand-tag">It learns by itself. It dreams while it sleeps — and wakes up better.</div>
   </div>
+  <div class="top-meta">An independent self-learning system for any robot.<br>
+    Host robot: <b id="host">WalkerSense — ODC body + Ventuno Q brain</b> · <span id="updated"></span></div>
+  <span class="zzz"><span style="font-size:12px">z</span> <span style="font-size:17px">z</span> <span style="font-size:23px">Z</span></span>
 </div>
-<div class="sub">An independent self-learning system for any robot. Host robot: <b id="host">WalkerSense — ODC body + Ventuno Q brain</b> · <span id="updated"></span></div>
-<div class="grid">
-  <div class="card"><h2>👀 Eyes — what the robot sees</h2>
+<div class="main">
+  <aside class="panel side"><h2>👀 Eyes — the camera</h2>
     <img class="cam" id="cam" alt="camera preview">
     <div class="row" style="margin-top:8px"><span class="zone" id="zone">—</span><b id="zconf"></b></div>
-    <div class="muted" id="zprobs"></div></div>
-  <div class="card"><h2>🌙 The dream — simulation</h2>
+    <div class="muted" id="zprobs"></div>
+    <div class="side-note">This camera is the robot's window on the world — and on itself.
+    What it sees becomes what it learns.</div>
+  </aside>
+  <section class="panel stage"><h2>🌙 The dream — simulation</h2>
     <div id="dreamWrap">
       <canvas id="dreamCanvas" style="width:100%;display:block;background:#0a0e14;border-radius:16px;border:1px solid #30363d"></canvas>
       <img class="cam" id="dreamFallback" alt="dream" style="display:none">
@@ -138,11 +154,20 @@ PAGE = """<!DOCTYPE html>
     </div>
     <div class="row" style="margin-top:6px"><span id="dreamScene">the dream</span><b>simulation</b></div>
     <div class="muted">The robot dreams in a physics simulation and sends only the data —
-    your screen rebuilds the dream locally. No video, no delay.</div></div>
-  <div class="card"><h2>🧠 What it believes</h2><div id="probes"></div>
+    your screen rebuilds the dream locally. No video, no delay.</div>
+    <div class="chatbox">
+      <div id="chatLog"></div>
+      <form id="chatForm" style="display:flex;gap:6px">
+        <input id="chatInput" autocomplete="off" placeholder="walk · stand · fall · flip · dream · lights on · speak · status"
+          style="flex:1;background:rgba(5,8,20,.7);border:1px solid rgba(130,150,255,.3);border-radius:999px;color:#e9edff;padding:10px 16px">
+        <button type="submit" style="background:linear-gradient(135deg,#4c6fff,#8b5cf6);border:none;color:#fff;border-radius:999px;padding:10px 20px;cursor:pointer;font-weight:700;box-shadow:0 6px 18px rgba(110,90,255,.4)">Send 💬</button>
+      </form>
+    </div>
+  </section>
+  <aside class="panel side"><h2>🧠 What it believes</h2><div id="probes"></div>
     <div class="row"><span>Probe accuracy</span><b id="acc"></b></div>
-    <div class="row"><span>Mean confidence</span><b id="conf"></b></div></div>
-  <div class="card"><h2>💤 Dreaming — idle self-learning</h2>
+    <div class="row"><span>Mean confidence</span><b id="conf"></b></div>
+    <h2 style="margin-top:18px">💤 Dreaming — idle self-learning</h2>
     <div class="big"><span id="cycles">0</span> <span class="muted" style="font-size:15px">dream cycles</span></div>
     <div id="voice" style="font-size:17px; font-style:italic; margin:6px 0"></div>
     <div id="last"></div>
@@ -151,18 +176,12 @@ PAGE = """<!DOCTYPE html>
     <h2 style="margin-top:16px">💾 Memory</h2>
     <div class="row"><span>Labeled samples on device</span><b id="total"></b></div>
     <div class="row"><span>Seed · taught by a human</span><b><span id="base"></span> · <span id="taught"></span></b></div>
-    <div class="row"><span>Pose model</span><b id="msize"></b></div></div>
-  <div class="card"><h2>🪞 Mirror self-test</h2><div id="selftest"><div class="muted">Not run yet.
-    The robot will command itself, watch itself, and grade what its vision reports.</div></div></div>
-  <div class="card"><h2>💬 Talk to the robot</h2>
-    <div id="chatLog" style="height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
-    <form id="chatForm" style="display:flex;gap:6px">
-      <input id="chatInput" autocomplete="off" placeholder="walk · stand · fall · flip · dream · lights on · speak · status"
-        style="flex:1;background:rgba(5,8,20,.7);border:1px solid rgba(130,150,255,.3);border-radius:999px;color:#e9edff;padding:10px 16px">
-      <button type="submit" style="background:linear-gradient(135deg,#4c6fff,#8b5cf6);border:none;color:#fff;border-radius:999px;padding:10px 20px;cursor:pointer;font-weight:700;box-shadow:0 6px 18px rgba(110,90,255,.4)">Send 💬</button>
-    </form></div>
-  <div class="card"><h2>📜 Learning timeline</h2><div id="events"></div></div>
+    <div class="row"><span>Pose model</span><b id="msize"></b></div>
+    <h2 style="margin-top:18px">🪞 Mirror self-test</h2><div id="selftest"><div class="muted">Not run yet.
+    The robot will command itself, watch itself, and grade what its vision reports.</div></div>
+  </aside>
 </div>
+<div class="panel ticker"><span class="ticker-title">📜 Learning timeline</span><div id="events"></div></div>
 <div class="foot"><img src="/logo.png" alt=""><span>REM PhysicalAI · robots that dream themselves better · <a href="https://github.com/RemPhysicalAI">github.com/RemPhysicalAI</a></span></div>
 <script>
 async function tick() {
