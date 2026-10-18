@@ -107,3 +107,9 @@ with expected outputs.
 - NEVER upload right after a failed compile: the stale build can
   half-flash the MCU and kill the running sketch (every Bridge method
   vanishes). Compile clean first, then upload, then verify a Bridge call.
+- After ANY physics change (actuator gains/force ranges, masses, contact
+  parameters), re-validate the dashboard dream scenes end-to-end before
+  calling it done: the viewer's scene forces (walking rocking torques)
+  are calibrated to the model, and a stronger model flips the dog with
+  the old torques (learned 2026-10-18: tune shipped ~11:20, regression
+  only caught from a user screenshot at 12:35, ~20 min before deadline).
