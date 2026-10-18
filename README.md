@@ -4,6 +4,13 @@
 
 **A self-improvement system for any robot.**
 
+> **Built for the Arduino Ventuno Q.** DreamRobot was designed for — and
+> runs on — the **Arduino Ventuno Q**, Arduino's Qualcomm-powered board
+> for physical AI. The Ventuno Q is **not yet on sale** (pre-order only);
+> DreamRobot was developed and demonstrated on it at the ExecuTorch
+> Hackathon (Founders, Inc., San Francisco, October 2026). When the
+> board ships, DreamRobot ships with it.
+
 DreamRobot is an independent learning layer that installs on a robot.
 Give a robot three things — a way to **act**, a camera to **see**, and a
 computer to **think** — and DreamRobot does the rest:
