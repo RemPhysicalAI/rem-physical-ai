@@ -28,15 +28,37 @@ PAGE = """<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>REM PhysicalAI — self-learning system</title>
+<link rel="icon" href="/logo.png">
 <style>
   * { box-sizing: border-box; }
+  body::after { content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      radial-gradient(2px 2px at 8% 18%, rgba(255,241,190,.95), transparent 60%),
+      radial-gradient(1.6px 1.6px at 22% 64%, rgba(210,220,255,.9), transparent 60%),
+      radial-gradient(2.2px 2.2px at 36% 10%, rgba(255,241,190,.85), transparent 60%),
+      radial-gradient(1.5px 1.5px at 55% 30%, rgba(255,255,255,.85), transparent 60%),
+      radial-gradient(2px 2px at 68% 8%, rgba(210,220,255,.9), transparent 60%),
+      radial-gradient(1.6px 1.6px at 82% 42%, rgba(255,241,190,.9), transparent 60%),
+      radial-gradient(2.2px 2.2px at 93% 16%, rgba(255,255,255,.8), transparent 60%),
+      radial-gradient(1.5px 1.5px at 47% 78%, rgba(210,220,255,.75), transparent 60%),
+      radial-gradient(1.8px 1.8px at 15% 88%, rgba(255,241,190,.8), transparent 60%),
+      radial-gradient(1.5px 1.5px at 76% 84%, rgba(255,255,255,.75), transparent 60%); }
   body { background: radial-gradient(1200px 700px at 75% -10%, #1b2350 0%, transparent 60%),
          radial-gradient(1000px 600px at 10% 0%, #251b4d 0%, transparent 55%),
          linear-gradient(180deg, #05070f 0%, #0a0f22 55%, #0d1130 100%);
          background-attachment: fixed; color:#e9edff; font-family: system-ui, sans-serif;
          margin:0; padding:22px; min-height:100vh; }
-  .hero { position:relative; border-radius:20px; overflow:hidden; margin-bottom:14px;
+  .hero { position:relative; border-radius:26px; overflow:hidden; margin-bottom:14px; z-index:1;
           border:1px solid rgba(140,160,255,.25); box-shadow: 0 18px 50px rgba(2,4,18,.65); }
+  .pup { position:absolute; right:24px; bottom:16px; width:126px; height:126px; object-fit:cover;
+         border-radius:36px; border:2px solid rgba(255,222,150,.6); z-index:3;
+         box-shadow: 0 0 38px rgba(255,206,110,.38), 0 16px 34px rgba(2,4,18,.55);
+         animation: pupFloat 5.2s ease-in-out infinite; }
+  @keyframes pupFloat { 0%,100% { transform: translateY(0) rotate(-1.6deg); } 50% { transform: translateY(-10px) rotate(1.6deg); } }
+  .zzz { position:absolute; right:140px; bottom:126px; z-index:4; font-weight:800; color:#ffe9a8;
+         text-shadow: 0 0 16px rgba(255,215,120,.85); animation: zFloat 3.8s ease-in-out infinite; }
+  @keyframes zFloat { 0%,100% { transform: translateY(0); opacity:.85; } 50% { transform: translateY(-12px); opacity:1; } }
+  @media (max-width: 640px) { .pup { width:88px; height:88px; border-radius:26px; } .zzz { right:104px; bottom:96px; } }
   .hero img { width:100%; height:230px; object-fit:cover; object-position:center 63%; display:block;
               animation: heroFloat 26s ease-in-out infinite alternate; }
   @keyframes heroFloat { from { transform: scale(1) translateY(0); } to { transform: scale(1.07) translateY(-6px); } }
@@ -47,10 +69,10 @@ PAGE = """<!DOCTYPE html>
   .pill { display:inline-block; padding:2px 11px; border-radius:999px; font-size:12.5px; vertical-align:middle;
           background:rgba(63,185,80,.16); border:1px solid rgba(63,185,80,.45); color:#7ee2a0; margin-left:6px; }
   .sub { color:#9aa7d4; margin:2px 2px 16px; font-size:13.5px; }
-  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:15px; }
-  .card { background: linear-gradient(180deg, rgba(23,30,58,.82), rgba(13,18,38,.88));
-          border:1px solid rgba(130,150,255,.18); border-radius:16px; padding:16px 18px;
-          box-shadow: 0 10px 30px rgba(2,4,16,.5); }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:15px; position:relative; z-index:1; }
+  .card { background: linear-gradient(180deg, rgba(27,35,66,.85), rgba(15,20,44,.9));
+          border:1px solid rgba(150,168,255,.22); border-radius:22px; padding:18px 20px;
+          box-shadow: 0 12px 34px rgba(2,4,16,.5), inset 0 1px 0 rgba(255,255,255,.05); }
   .card h2 { font-size:13px; text-transform:uppercase; letter-spacing:.09em; color:#aebaff; margin:0 0 12px; }
   .probe { margin:10px 0; } .probe .lbl { display:flex; justify-content:space-between; font-size:14px; }
   .bar { height:10px; background:rgba(255,255,255,.07); border-radius:5px; overflow:hidden; margin-top:4px; }
@@ -60,7 +82,7 @@ PAGE = """<!DOCTYPE html>
   .evt { font-size:13px; padding:6px 0; border-bottom:1px solid rgba(130,150,255,.1); }
   .evt b { color:#d2a8ff; font-weight:600; } .kept { color:#3fb950; } .disc { color:#d29922; }
   #live { color:#7ee2a0; } .row { display:flex; justify-content:space-between; margin:4px 0; font-size:14px; }
-  img.cam { width:100%; border-radius:12px; border:1px solid rgba(130,150,255,.22); background:#000; }
+  img.cam { width:100%; border-radius:16px; border:1px solid rgba(130,150,255,.22); background:#000; }
   #dreamCanvas { border:1px solid rgba(140,160,255,.4) !important; animation: dreamPulse 3.4s ease-in-out infinite; }
   @keyframes dreamPulse { 0%,100% { box-shadow: 0 0 20px rgba(96,120,255,.22); } 50% { box-shadow: 0 0 42px rgba(150,130,255,.42); } }
   .zone { font-size:20px; font-weight:700; }
@@ -68,6 +90,8 @@ PAGE = """<!DOCTYPE html>
 <div class="hero">
   <img src="/banner.jpg" alt="A robot dreaming under the moon">
   <div class="veil"></div>
+  <img class="pup" src="/logo.png" alt="REM PhysicalAI — the sleeping robot pup">
+  <div class="zzz"><span style="font-size:14px">z</span> <span style="font-size:20px">z</span> <span style="font-size:27px">Z</span></div>
   <div class="txt">
     <h1>🌙 REM PhysicalAI <span class="pill" id="live">● live</span></h1>
     <div class="tag">It learns by itself. It dreams while it sleeps — and wakes up better.</div>
@@ -80,7 +104,7 @@ PAGE = """<!DOCTYPE html>
     <div class="row" style="margin-top:8px"><span class="zone" id="zone">—</span><b id="zconf"></b></div>
     <div class="muted" id="zprobs"></div></div>
   <div class="card"><h2>🌙 The dream — simulation</h2>
-    <canvas id="dreamCanvas" style="width:100%;display:block;background:#0a0e14;border-radius:8px;border:1px solid #30363d"></canvas>
+    <canvas id="dreamCanvas" style="width:100%;display:block;background:#0a0e14;border-radius:16px;border:1px solid #30363d"></canvas>
     <img class="cam" id="dreamFallback" alt="dream" style="display:none">
     <div class="row" style="margin-top:6px"><span id="dreamScene">the dream</span><b>simulation</b></div>
     <div class="muted">The robot dreams in a physics simulation and sends only the data —
@@ -104,8 +128,8 @@ PAGE = """<!DOCTYPE html>
     <div id="chatLog" style="height:170px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
     <form id="chatForm" style="display:flex;gap:6px">
       <input id="chatInput" autocomplete="off" placeholder="caminhe · levanta · cai · vira · acende · fala · estado"
-        style="flex:1;background:rgba(5,8,20,.7);border:1px solid rgba(130,150,255,.3);border-radius:10px;color:#e9edff;padding:9px">
-      <button type="submit" style="background:linear-gradient(135deg,#4c6fff,#8b5cf6);border:none;color:#fff;border-radius:10px;padding:9px 16px;cursor:pointer;font-weight:600">Send</button>
+        style="flex:1;background:rgba(5,8,20,.7);border:1px solid rgba(130,150,255,.3);border-radius:999px;color:#e9edff;padding:10px 16px">
+      <button type="submit" style="background:linear-gradient(135deg,#4c6fff,#8b5cf6);border:none;color:#fff;border-radius:999px;padding:10px 20px;cursor:pointer;font-weight:700;box-shadow:0 6px 18px rgba(110,90,255,.4)">Send 💬</button>
     </form></div>
   <div class="card"><h2>📜 Learning timeline</h2><div id="events"></div></div>
 </div>
@@ -408,15 +432,19 @@ _ABOUT_CSS = """
   .slide { display:none; min-height:100vh; box-sizing:border-box; padding:28px 5vw 70px;
            flex-direction:column; align-items:center; justify-content:center; text-align:center; }
   .slide.on { display:flex; }
-  .slide img { max-width:min(880px, 92vw); max-height:52vh; border-radius:16px;
+  .slide img { max-width:min(880px, 92vw); max-height:52vh; border-radius:22px;
                border:1px solid rgba(140,160,255,.3); object-fit:cover;
                box-shadow: 0 18px 50px rgba(2,4,18,.6), 0 0 34px rgba(96,120,255,.18); }
+  .pup { position:fixed; top:16px; right:16px; width:64px; height:64px; object-fit:cover; border-radius:20px;
+         border:2px solid rgba(255,222,150,.55); box-shadow: 0 0 26px rgba(255,206,110,.35); z-index:5;
+         animation: pupFloat 5.2s ease-in-out infinite; }
+  @keyframes pupFloat { 0%,100% { transform: translateY(0) rotate(-1.6deg); } 50% { transform: translateY(-7px) rotate(1.6deg); } }
   h1 { font-size:clamp(26px, 4.5vw, 44px); margin:22px 0 10px; text-shadow: 0 2px 22px rgba(90,110,255,.4); }
   p { font-size:clamp(15px, 2.2vw, 20px); line-height:1.55; color:#cdd7ff; max-width:760px; }
   .nav { position:fixed; bottom:18px; left:0; right:0; display:flex; gap:14px;
          justify-content:center; align-items:center; }
-  .nav button { background:linear-gradient(135deg,#4c6fff,#8b5cf6); color:#fff; border:none; border-radius:10px;
-                padding:10px 20px; font-size:15px; cursor:pointer; font-weight:600;
+  .nav button { background:linear-gradient(135deg,#4c6fff,#8b5cf6); color:#fff; border:none; border-radius:999px;
+                padding:10px 22px; font-size:15px; cursor:pointer; font-weight:600;
                 box-shadow: 0 6px 20px rgba(80,90,255,.35); }
   .nav span { color:#9aa7d4; font-size:14px; }
   a { color:#58a6ff; }
@@ -424,7 +452,8 @@ _ABOUT_CSS = """
 
 ABOUT_PAGE = ("<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'>"
               "<meta name='viewport' content='width=device-width, initial-scale=1'>"
-              "<title>REM PhysicalAI — about</title><style>" + _ABOUT_CSS + "</style></head><body>"
+              "<title>REM PhysicalAI — about</title><link rel='icon' href='/logo.png'><style>" + _ABOUT_CSS + "</style></head><body>"
+              "<img class='pup' src='/logo.png' alt='REM PhysicalAI'>"
               + "".join(
                   f"<section class='slide'><img src='/about/{img}' alt=''>"
                   f"<h1>{title}</h1><p>{text}</p></section>"
@@ -558,6 +587,14 @@ class Handler(BaseHTTPRequestHandler):
             if os.path.exists(jpg):
                 with open(jpg, "rb") as f:
                     self._send(f.read(), "image/jpeg")
+            else:
+                self.send_response(404)
+                self.end_headers()
+        elif path == "/logo.png":
+            fpath = os.path.join(HERE, "logo.png")
+            if os.path.exists(fpath):
+                with open(fpath, "rb") as f:
+                    self._send(f.read(), "image/png")
             else:
                 self.send_response(404)
                 self.end_headers()
