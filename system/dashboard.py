@@ -110,6 +110,16 @@ PAGE = """<!DOCTYPE html>
   .chip.ctl { background:rgba(63,185,80,.16); border:1px solid rgba(63,185,80,.45); color:#7ee2a0; }
   .chip.drm { background:rgba(139,92,246,.18); border:1px solid rgba(139,92,246,.5); color:#cdb4ff; }
   .proj-status { font-size:12.5px; color:#9fb0e8; margin-top:5px; }
+  .pbtn { background:rgba(76,110,255,.16); border:1px solid rgba(124,140,255,.5); color:#dbe4ff;
+          border-radius:999px; padding:6px 13px; font-size:12.5px; font-weight:600; cursor:pointer; }
+  .pbtn:hover { background:rgba(76,110,255,.3); }
+  .psel { background:rgba(5,8,20,.7); color:#e9edff; border:1px solid rgba(130,150,255,.35);
+          border-radius:999px; padding:5px 10px; font-size:12.5px; }
+  .pinp { background:rgba(5,8,20,.7); color:#e9edff; border:1px solid rgba(130,150,255,.3);
+          border-radius:999px; padding:6px 12px; font-size:12.5px; }
+  .pinp:focus { outline:none; border-color:rgba(255,222,150,.6); }
+  .plug { display:inline-block; font-size:11.5px; padding:2px 9px; border-radius:999px; margin:0 5px 5px 0;
+          background:rgba(255,233,168,.1); border:1px solid rgba(255,222,150,.4); color:#ffedb5; }
   .svc { font-size:11.5px; padding:2px 9px; border-radius:999px; margin-right:5px; white-space:nowrap;
          background:rgba(255,255,255,.05); border:1px solid rgba(150,168,255,.25); color:#8f9cc9; }
   .svc.up { background:rgba(63,185,80,.14); border-color:rgba(63,185,80,.45); color:#7ee2a0; }
@@ -155,6 +165,22 @@ PAGE = """<!DOCTYPE html>
 </div>
 <div class="main">
   <aside class="panel side"><h2>🗂 Projects — one system, many robots</h2>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <button class="pbtn" type="button" onclick="pToggleAdd()">＋ Add project</button>
+      <button class="pbtn" type="button" onclick="pDetect()">📷 Detect robot</button>
+    </div>
+    <div id="addProj" style="display:none;margin-bottom:10px">
+      <input id="npName" class="pinp" placeholder="Robot name — e.g. PuppyPi" style="width:100%;margin-bottom:6px">
+      <div style="display:flex;gap:6px">
+        <select id="npControl" class="psel" style="flex:1">
+          <option value="dream-only">🌙 Dream only</option>
+          <option value="full">⚙️ Full control</option>
+          <option value="camera-only">📷 Camera only</option>
+        </select>
+        <button class="pbtn" type="button" onclick="pAdd()">Add</button>
+      </div>
+    </div>
+    <div id="detectMsg" class="muted" style="margin-bottom:8px"></div>
     <div id="projects"><div class="muted">The camera is the front door: the system
     detects the robot in view, knows which robot it is — then it controls it if
     it can, or dreams about it and trains it virtually if it cannot.</div></div>
@@ -219,14 +245,11 @@ async function tick() {
         Object.entries(v.probs).map(([k, p]) => k + ' ' + Math.round(p * 100) + '%').join(' · ') : '');
     }
     if (s.projects) {
-      document.getElementById('projects').innerHTML =
-        (s.projects.projects || []).map(p => `
-        <div class="proj ${p.status === 'in view now' ? 'inview' : ''}">
-          <div class="proj-top"><b>${p.name}</b>
-          <span class="chip ${p.control === 'full' ? 'ctl' : 'drm'}">${p.control === 'full' ? '⚙️ full control' : '🌙 dream only'}</span></div>
-          <div class="muted">${p.what}</div>
-          <div class="proj-status">${p.status === 'under test' ? '🧪 under test — it dreams about this robot and trains it virtually' : (p.status === 'in view now' ? '📷 in view now — preparing to dream about it' : (p.status === 'on this board' ? '🏠 on this board' : '📷 not in view'))}</div>
-        </div>`).join('');
+      const pj = JSON.stringify(s.projects.projects || []);
+      if (window.__lastProjJson !== pj) {
+        window.__lastProjJson = pj;
+        pRender(s.projects.projects || []);
+      }
     }
     document.getElementById('probes').innerHTML = (s.probes || []).map(p => `
       <div class="probe"><div class="lbl"><span>${p.name} → <b>${p.pose}</b></span>
@@ -302,6 +325,59 @@ function chatAdd(who, text) {
   chatLog.appendChild(d); chatLog.scrollTop = chatLog.scrollHeight;
 }
 chatAdd('robot', 'Tell me what to do: walk, stand, fall, flip, dream, lights on, lights off, speak, status.');
+// ---- Projects: add / detect / configure control / plugins ---------------
+async function pPost(path, payload) {
+  try {
+    const r = await (await fetch(path, {method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)})).json();
+    if (r.reply) document.getElementById('detectMsg').textContent = r.reply;
+    window.__lastProjJson = null;  // force a re-render on the next tick
+    tick();
+  } catch (e) {
+    document.getElementById('detectMsg').textContent = 'No connection to the board right now.';
+  }
+}
+function pToggleAdd() {
+  const f = document.getElementById('addProj');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+function pAdd() {
+  const name = document.getElementById('npName').value.trim();
+  const control = document.getElementById('npControl').value;
+  if (name) pPost('/projects/add', {name, control});
+}
+function pDetect() { pPost('/projects/detect', {}); }
+function pControl(id, control) { pPost('/projects/control', {id, control}); }
+function pPlugin(id) {
+  const inp = document.getElementById('plg-' + id);
+  if (inp && inp.value.trim()) pPost('/projects/plugin', {id, name: inp.value.trim()});
+}
+function pRender(list) {
+  const ctlLabel = {full: '⚙️ full control', 'dream-only': '🌙 dream only', 'camera-only': '📷 camera only'};
+  const statusLine = (p) => p.status === 'under test' ? '🧪 under test — it dreams about this robot and trains it virtually'
+    : (p.status === 'in view now' ? '📷 in view now — preparing to dream about it'
+    : (p.status === 'on this board' ? '🏠 on this board' : '📷 not in view'));
+  document.getElementById('projects').innerHTML = list.map(p => `
+    <div class="proj ${p.status === 'in view now' || p.status === 'under test' ? 'inview' : ''}">
+      <div class="proj-top"><b>${p.name}</b>
+      <span class="chip ${p.control === 'full' ? 'ctl' : 'drm'}">${ctlLabel[p.control] || p.control}</span></div>
+      <div class="muted">${p.what || ''}</div>
+      <div class="proj-status">${statusLine(p)}</div>
+      <div class="row" style="margin-top:7px"><span class="muted">Control</span>
+        <select class="psel" onchange="pControl('${p.id}', this.value)">
+          <option value="full" ${p.control === 'full' ? 'selected' : ''}>⚙️ Full control</option>
+          <option value="dream-only" ${p.control === 'dream-only' ? 'selected' : ''}>🌙 Dream only</option>
+          <option value="camera-only" ${p.control === 'camera-only' ? 'selected' : ''}>📷 Camera only</option>
+        </select></div>
+      <div style="margin-top:7px">${(p.plugins || []).map(pl =>
+        `<span class="plug">🧩 ${pl.name}</span>`).join('') || '<span class="muted">No plugins yet</span>'}</div>
+      <div style="display:flex;gap:6px;margin-top:7px">
+        <input id="plg-${p.id}" class="pinp" placeholder="Add a plugin — a software accessory" style="flex:1">
+        <button class="pbtn" type="button" onclick="pPlugin('${p.id}')">＋ Plugin</button>
+      </div>
+    </div>`).join('');
+}
 document.getElementById('chatForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const inp = document.getElementById('chatInput');
@@ -652,6 +728,98 @@ def handle_command(text):
             "flip · dream · lights on · lights off · speak · status"), {}
 
 
+CONTROL_LABELS = {
+    "full": "full control — it commands the body through the Bridge (LED matrix, servos)",
+    "dream-only": "dream only — it cannot control this robot, so it dreams about it and trains it virtually",
+    "camera-only": "camera only — it watches this robot; no control, no twin yet",
+}
+
+
+def _slug(name):
+    s = "".join(c if c.isalnum() else "-" for c in name.lower()).strip("-")
+    return s or "project"
+
+
+def _load_projects():
+    reg = read_json("projects.json")
+    return reg if isinstance(reg, dict) else {"projects": []}
+
+
+def _save_projects(reg):
+    path = os.path.join(HERE, "projects.json")
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(reg, f, indent=1)
+    os.replace(tmp, path)
+
+
+def projects_action(action, payload):
+    """Add / configure projects and plugins. Returns (ok, message)."""
+    reg = _load_projects()
+    projects = reg.setdefault("projects", [])
+    if action == "add":
+        name = str(payload.get("name", "")).strip()[:48]
+        control = payload.get("control", "dream-only")
+        if not name:
+            return False, "Give the project a name first."
+        if control not in CONTROL_LABELS:
+            control = "dream-only"
+        pid = _slug(name)
+        if any(p.get("id") == pid for p in projects):
+            return False, f"{name} is already a project."
+        projects.append({"id": pid, "name": name,
+                         "what": "Added from the dashboard — describe this robot in projects/.",
+                         "control": control,
+                         "control_label": CONTROL_LABELS[control],
+                         "plugins": []})
+        _save_projects(reg)
+        return True, f"Project {name} added — it now lives in the registry."
+    if action == "control":
+        pid = payload.get("id")
+        control = payload.get("control")
+        for p in projects:
+            if p.get("id") == pid and control in CONTROL_LABELS:
+                p["control"] = control
+                p["control_label"] = CONTROL_LABELS[control]
+                _save_projects(reg)
+                return True, f"{p['name']}: control set to {control}."
+        return False, "Project or control mode not found."
+    if action == "plugin":
+        pid = payload.get("id")
+        name = str(payload.get("name", "")).strip()[:48]
+        if not name:
+            return False, "Name the plugin first."
+        for p in projects:
+            if p.get("id") == pid:
+                p.setdefault("plugins", []).append(
+                    {"name": name, "kind": "software accessory",
+                     "status": "registered"})
+                _save_projects(reg)
+                return True, f"Plugin {name} added to {p['name']}."
+        return False, "Project not found."
+    if action == "detect":
+        vision = read_json("vision_state.json") or {}
+        zone = vision.get("zone")
+        robot = vision.get("robot")
+        under = next((p for p in projects if p.get("under_test")), None)
+        who = under["name"] if under else "the registered robot"
+        if robot:
+            match = next((p for p in projects if p.get("id") == robot), None)
+            name = match["name"] if match else robot
+            conf = round(100 * (vision.get("robot_confidence") or 0))
+            return True, (f"📷 Detected: {name} ({conf}% sure) — it is the "
+                          f"project under test. Preparing to dream about it.")
+        if zone and zone not in ("absent", "watching"):
+            return True, (f"📷 Camera sees a robot ({zone}) — identified as "
+                          f"{who}, the project under test.")
+        if zone == "absent":
+            return True, "📷 The camera sees no robot right now."
+        return True, (f"📷 Camera is live; the detector is not trained "
+                      f"yet, so by the registry the robot in front of the "
+                      f"camera is {who} (under test).")
+    return False, "Unknown action."
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
@@ -698,6 +866,8 @@ class Handler(BaseHTTPRequestHandler):
                 for p in projects.get("projects", []):
                     if p.get("under_test"):
                         p["status"] = "under test"
+                    elif vision and vision.get("robot") == p.get("id"):
+                        p["status"] = "in view now"
                     elif p.get("control") == "full":
                         p["status"] = "on this board"
                     elif vz and vz not in ("absent", "watching"):
@@ -765,20 +935,26 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def do_POST(self):
-        if self.path.split("?")[0] != "/command":
-            self.send_response(404)
-            self.end_headers()
-            return
+        path = self.path.split("?")[0]
         try:
             length = int(self.headers.get("Content-Length") or 0)
             payload = json.loads(self.rfile.read(length) or b"{}")
+        except Exception as e:
+            self._send(json.dumps({"reply": f"Error: {e}"}),
+                       "application/json")
+            return
+        if path == "/command":
             reply, extra = handle_command(str(payload.get("text", "")))
             body = {"reply": reply}
             body.update(extra)
             self._send(json.dumps(body), "application/json")
-        except Exception as e:
-            self._send(json.dumps({"reply": f"Erro: {e}"}),
+        elif path.startswith("/projects/"):
+            ok, msg = projects_action(path.rsplit("/", 1)[1], payload)
+            self._send(json.dumps({"ok": ok, "reply": msg}),
                        "application/json")
+        else:
+            self.send_response(404)
+            self.end_headers()
 
 
 if __name__ == "__main__":

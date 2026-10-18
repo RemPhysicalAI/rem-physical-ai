@@ -49,6 +49,15 @@ def main():
         print("no vision model yet — preview mode: the camera streams and "
               "the dashboard watches; teach it (vision_train.py) to name zones")
 
+    detect_method, detect_labels = None, []
+    dpath = os.path.join(HERE, "detect.pte")
+    if os.path.exists(dpath) and os.path.exists(os.path.join(HERE, "detect_labels.json")):
+        from executorch.runtime import Runtime
+
+        detect_labels = json.load(open(os.path.join(HERE, "detect_labels.json")))["labels"]
+        detect_method = Runtime.get().load_program(dpath).load_method("forward")
+        print(f"robot detector loaded: labels={detect_labels}")
+
     try:
         bridge = Bridge()
     except Exception:
@@ -69,10 +78,10 @@ def main():
         if not ok:
             time.sleep(0.1)
             continue
+        small = cv2.resize(frame, (SIZE, SIZE))
+        rgb = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
+        tensor = torch.from_numpy(rgb).permute(2, 0, 1).float().unsqueeze(0) / 255.0
         if method is not None:
-            small = cv2.resize(frame, (SIZE, SIZE))
-            rgb = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
-            tensor = torch.from_numpy(rgb).permute(2, 0, 1).float().unsqueeze(0) / 255.0
             t0 = time.perf_counter()
             scores = method.execute([tensor])[0][0]
             infer_ms = (time.perf_counter() - t0) * 1000
@@ -90,6 +99,17 @@ def main():
                      "zone": "watching", "confidence": None, "probs": {},
                      "note": "camera live — vision model not trained yet"}
             print("preview frame", flush=True)
+        if detect_method is not None:
+            dscores = detect_method.execute([tensor])[0][0]
+            dprobs = torch.softmax(dscores, dim=0)
+            dlabel = detect_labels[int(torch.argmax(dprobs))]
+            dconf = float(torch.max(dprobs))
+            state["robot_probs"] = {detect_labels[i]: round(float(dprobs[i]), 3)
+                                     for i in range(len(detect_labels))}
+            if dlabel != "other" and dconf >= 0.6:
+                state["robot"] = dlabel
+                state["robot_confidence"] = round(dconf, 3)
+                print(f"robot detected: {dlabel} ({dconf:.2f})", flush=True)
         with open(os.path.join(HERE, "vision_state.json"), "w") as f:
             json.dump(state, f, indent=1)
         cv2.imwrite(os.path.join(HERE, "latest.jpg"), frame)

@@ -1,1 +1,24 @@
-{"note":"REM PhysicalAI is one system for many robots. It starts at the camera: it detects the robot in view, knows which robot it is, and then — if it can control that robot, it controls it; if it cannot, it dreams about it and trains it virtually, in simulation.","projects":[{"control":"dream-only","control_label":"dream only — it cannot control this robot, so it dreams about it and trains it virtually","dream":"Its physics twin lives on the dream stage: the system rehearses with the twin and learns there.","id":"puppy","name":"PuppyPi","under_test":true,"what":"The robot under test at this event — the system watches it, dreams about it, and trains it virtually."},{"control":"full","control_label":"full control — it commands the body through the Bridge (LED matrix, servos)","dream":"Dreams with its pose model: standing, walking, fallen, flipped.","id":"walkersense","name":"WalkerSense","what":"Another registered body — an ODC walker driven by this same Ventuno Q brain. Not the robot under test today."}]}
+{
+ "note": "REM PhysicalAI is one system for many robots. It starts at the camera: it detects the robot in view, knows which robot it is, and then \u2014 if it can control that robot, it controls it; if it cannot, it dreams about it and trains it virtually, in simulation.",
+ "projects": [
+  {
+   "control": "dream-only",
+   "control_label": "dream only \u2014 it cannot control this robot, so it dreams about it and trains it virtually",
+   "dream": "Its physics twin lives on the dream stage: the system rehearses with the twin and learns there.",
+   "id": "puppy",
+   "name": "PuppyPi",
+   "under_test": true,
+   "what": "The robot under test at this event \u2014 the system watches it, dreams about it, and trains it virtually.",
+   "plugins": []
+  },
+  {
+   "control": "full",
+   "control_label": "full control \u2014 it commands the body through the Bridge (LED matrix, servos)",
+   "dream": "Dreams with its pose model: standing, walking, fallen, flipped.",
+   "id": "walkersense",
+   "name": "WalkerSense",
+   "what": "Another registered body \u2014 an ODC walker driven by this same Ventuno Q brain. Not the robot under test today.",
+   "plugins": []
+  }
+ ]
+}

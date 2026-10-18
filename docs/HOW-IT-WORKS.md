@@ -91,3 +91,21 @@ robots (many *projects*) plug into. Every session starts the same way:
 The dashboard's Projects panel shows this live: every registered
 robot, its mode (⚙️ full control / 🌙 dream only), and which one the
 camera is looking at right now.
+
+## Adding robots, configuring control, plugins
+
+- **Add project** — the dashboard's Projects panel takes a new robot
+  in seconds; it is saved in the registry (`system/projects.json`)
+  and gets its own folder under `projects/` with everything it has
+  learned.
+- **Detect** — the system identifies the robot in front of the camera
+  with a small on-device detector (`detect.pte`), trained from
+  ordinary photos: upload a photo, it is multiplied into a training
+  set (`vision_ingest.py`), and the board trains the detector itself
+  (`detect_train.py`).
+- **Configure control** — each project declares how the system may
+  treat its robot: ⚙️ full control (it commands the body), 🌙 dream
+  only (it dreams and trains virtually), or 📷 camera only.
+- **Plugins** — software accessories: a project carries a list of
+  plugins that extend what the system can do with that robot, added
+  from the same panel. Hardware has accessories; here, software does.
